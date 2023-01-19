@@ -32,6 +32,7 @@ from ._internal import (
     SessionContext,
     Expression,
     ScalarUDF,
+    FileCompressionType,
 )
 
 __version__ = importlib_metadata.version(__name__)
@@ -45,6 +46,7 @@ __all__ = [
     "ScalarUDF",
     "column",
     "literal",
+    "FileCompressionType",
 ]
 
 

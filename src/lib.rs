@@ -62,6 +62,7 @@ fn _internal(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<udf::PyScalarUDF>()?;
     m.add_class::<udaf::PyAggregateUDF>()?;
     m.add_class::<config::PyConfig>()?;
+    m.add_class::<config::PyFileCompressionType>()?;
 
     // Register the functions as a submodule
     let funcs = PyModule::new(py, "functions")?;

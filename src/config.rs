@@ -19,10 +19,34 @@ use pyo3::prelude::*;
 use pyo3::types::*;
 
 use datafusion::config::ConfigOptions;
+use datafusion::datasource::file_format::file_type::FileCompressionType;
 use datafusion_common::ScalarValue;
 
+#[pyclass(name = "FileCompressionType", module = "datafusion", subclass)]
+#[derive(Debug, Clone)]
+pub(crate) struct PyFileCompressionType {
+    pub(crate) file_compression_type: FileCompressionType,
+}
+
+#[pymethods]
+impl PyFileCompressionType {
+    #[new]
+    fn py_new(compression_type_name: &str) -> Self {
+        Self {
+            file_compression_type: match compression_type_name.to_lowercase().as_str() {
+                "gzip" => FileCompressionType::GZIP,
+                "bzip2" => FileCompressionType::BZIP2,
+                "xz" => FileCompressionType::XZ,
+                "none" => FileCompressionType::UNCOMPRESSED,
+                "uncompressed" => FileCompressionType::UNCOMPRESSED,
+                _ => panic!("Unsupported compression type: `{compression_type_name}`")
+            }
+        }
+    }
+}
+
 #[pyclass(name = "Config", module = "datafusion", subclass)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct PyConfig {
     config: ConfigOptions,
 }

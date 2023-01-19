@@ -19,12 +19,14 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use datafusion::datasource::file_format::file_type::FileCompressionType;
 use object_store::ObjectStore;
 use uuid::Uuid;
 
 use pyo3::exceptions::{PyKeyError, PyValueError};
 use pyo3::prelude::*;
 
+use crate::config::PyFileCompressionType;
 use crate::catalog::{PyCatalog, PyTable};
 use crate::dataframe::PyDataFrame;
 use crate::dataset::Dataset;
@@ -146,6 +148,7 @@ impl PySessionContext {
     fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
         let result = self.ctx.sql(query);
         let df = wait_for_future(py, result).map_err(DataFusionError::from)?;
+        println!("DataFrame: {:?}", df);
         Ok(PyDataFrame::new(df))
     }
 
@@ -231,7 +234,8 @@ impl PySessionContext {
         has_header = "true",
         delimiter = "\",\"",
         schema_infer_max_records = "1000",
-        file_extension = "\".csv\""
+        file_extension = "\".csv\"",
+        file_compression_type = "None"
     )]
     fn register_csv(
         &mut self,
@@ -242,6 +246,7 @@ impl PySessionContext {
         delimiter: &str,
         schema_infer_max_records: usize,
         file_extension: &str,
+        file_compression_type: Option<PyFileCompressionType>,
         py: Python,
     ) -> PyResult<()> {
         let path = path
@@ -254,11 +259,19 @@ impl PySessionContext {
             ));
         }
 
+        let compression = match file_compression_type {
+            Some(file_compression_type) => file_compression_type.file_compression_type,
+            None => FileCompressionType::UNCOMPRESSED,
+        };
+
+        println!("Setting compression type to: {:?}", compression);
+
         let mut options = CsvReadOptions::new()
             .has_header(has_header)
             .delimiter(delimiter[0])
             .schema_infer_max_records(schema_infer_max_records)
-            .file_extension(file_extension);
+            .file_extension(file_extension)
+            .file_compression_type(compression);
         options.schema = schema.as_ref().map(|x| &x.0);
 
         let result = self.ctx.register_csv(name, path, options);
@@ -372,6 +385,7 @@ impl PySessionContext {
         delimiter: &str,
         schema_infer_max_records: usize,
         file_extension: &str,
+        file_compression_type: Option<PyFileCompressionType>,
         table_partition_cols: Vec<(String, String)>,
         py: Python,
     ) -> PyResult<PyDataFrame> {
@@ -386,11 +400,19 @@ impl PySessionContext {
             ));
         };
 
+        let compression = match file_compression_type {
+            Some(file_compression_type) => file_compression_type.file_compression_type,
+            None => FileCompressionType::UNCOMPRESSED,
+        };
+
+        println!("Setting compression type to: {:?}", compression);
+
         let mut options = CsvReadOptions::new()
             .has_header(has_header)
             .delimiter(delimiter[0])
             .schema_infer_max_records(schema_infer_max_records)
             .file_extension(file_extension)
+            .file_compression_type(compression)
             .table_partition_cols(convert_table_partition_cols(table_partition_cols)?);
 
         if let Some(py_schema) = schema {
