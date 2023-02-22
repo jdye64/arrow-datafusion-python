@@ -42,6 +42,7 @@ impl Display for PyAlias {
 
 impl PyAlias {
     pub fn new(expr: &Expr, alias_name: &String) -> Self {
+        print!("Expr: {:?}, Alias: {:?}", expr, alias_name);
         Self {
             expr: expr.clone().into(),
             alias_name: alias_name.to_owned(),
