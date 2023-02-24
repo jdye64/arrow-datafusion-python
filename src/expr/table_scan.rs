@@ -51,14 +51,11 @@ impl Display for PyTableScan {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "TableScan\nTable Name: {}
-            \nProjections: {:?}
-            \nProjected Schema: {:?}
-            \nFilters: {:?}",
+            "TableScan -> Table Name: `{}`, Projections: `{:?}`, Projected Schema: `{:?}`, Filters: `{:?}`",
             &self.table_scan.table_name,
-            &self.py_projections(),
-            &self.py_schema(),
-            &self.py_filters(),
+            &self.projections(),
+            &self.schema(),
+            &self.filters(),
         )
     }
 }
@@ -66,7 +63,6 @@ impl Display for PyTableScan {
 #[pymethods]
 impl PyTableScan {
     /// Retrieves the name of the table represented by this `TableScan` instance
-    #[pyo3(name = "table_name")]
     fn py_table_name(&self) -> PyResult<&str> {
         Ok(&self.table_scan.table_name)
     }
@@ -83,8 +79,7 @@ impl PyTableScan {
     /// provides a Tuple of the (index, column_name) to make things simplier
     /// for the calling code since often times the name is preferred to
     /// the index which is a lower level abstraction.
-    #[pyo3(name = "projection")]
-    fn py_projections(&self) -> PyResult<Vec<(usize, String)>> {
+    fn projections(&self) -> PyResult<Vec<(usize, String)>> {
         match &self.table_scan.projection {
             Some(indices) => {
                 let schema = self.table_scan.source.schema();
@@ -98,15 +93,13 @@ impl PyTableScan {
     }
 
     /// Resulting schema from the `TableScan` operation
-    #[pyo3(name = "schema")]
-    fn py_schema(&self) -> PyResult<PyDFSchema> {
+    fn schema(&self) -> PyResult<PyDFSchema> {
         Ok((*self.table_scan.projected_schema).clone().into())
     }
 
     /// Certain `TableProvider` physical readers offer the capability to filter rows that
     /// are read at read time. These `filters` are contained here.
-    #[pyo3(name = "filters")]
-    fn py_filters(&self) -> PyResult<Vec<PyExpr>> {
+    fn filters(&self) -> PyResult<Vec<PyExpr>> {
         Ok(self
             .table_scan
             .filters
@@ -116,8 +109,7 @@ impl PyTableScan {
     }
 
     /// Optional number of rows that should be read at read time by the `TableProvider`
-    #[pyo3(name = "fetch")]
-    fn py_fetch(&self) -> PyResult<Option<usize>> {
+    fn fetch(&self) -> PyResult<Option<usize>> {
         Ok(self.table_scan.fetch)
     }
 
