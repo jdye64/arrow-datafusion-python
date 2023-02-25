@@ -63,7 +63,7 @@ impl Display for PyTableScan {
 #[pymethods]
 impl PyTableScan {
     /// Retrieves the name of the table represented by this `TableScan` instance
-    fn py_table_name(&self) -> PyResult<&str> {
+    fn table_name(&self) -> PyResult<&str> {
         Ok(&self.table_scan.table_name)
     }
 

@@ -15,10 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use datafusion_common::DFSchema;
+use datafusion_common::{DFField, DFSchema};
 use pyo3::prelude::*;
+
+use super::df_field::PyDFField;
 
 #[derive(Debug, Clone)]
 #[pyclass(name = "DFSchema", module = "datafusion.common", subclass)]
@@ -42,16 +44,29 @@ impl From<DFSchema> for PyDFSchema {
 
 #[pymethods]
 impl PyDFSchema {
-    #[pyo3(name = "empty")]
     #[staticmethod]
-    fn py_empty() -> PyResult<Self> {
+    fn empty() -> PyResult<Self> {
         Ok(Self {
             schema: Arc::new(DFSchema::empty()),
         })
     }
 
-    #[pyo3(name = "field_names")]
-    fn py_field_names(&self) -> PyResult<Vec<String>> {
+    fn fields(&self) -> PyResult<Vec<PyDFField>> {
+        Ok(self
+            .schema
+            .fields()
+            .iter()
+            .map(|e| PyDFField::from(e.clone()))
+            .collect())
+    }
+
+    /// List of fully-qualified field names in this schema
+    fn field_names(&self) -> PyResult<Vec<String>> {
         Ok(self.schema.field_names())
+    }
+
+    // Get metadata of this schema
+    fn metadata(&self) -> PyResult<HashMap<String, String>> {
+        Ok(self.schema.metadata().clone())
     }
 }
