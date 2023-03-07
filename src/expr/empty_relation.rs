@@ -73,7 +73,6 @@ impl PyEmptyRelation {
     }
 }
 
-
 impl LogicalNode for PyEmptyRelation {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
         vec![]
