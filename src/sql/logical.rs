@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use crate::errors::{py_runtime_err, py_unsupported_variant_err};
+use crate::errors::py_unsupported_variant_err;
 use crate::expr::aggregate::PyAggregate;
 use crate::expr::analyze::PyAnalyze;
 use crate::expr::empty_relation::PyEmptyRelation;
@@ -57,15 +57,13 @@ impl PyLogicalPlan {
             LogicalPlan::Aggregate(plan) => PyAggregate::from(plan.clone()).to_variant(py),
             LogicalPlan::Analyze(plan) => PyAnalyze::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
-            LogicalPlan::Extension(_node) => {
-                panic!("Ok this bad boy needs some work!!!")
-            },
+            LogicalPlan::Extension(_node) => Err(py_unsupported_variant_err("Cannot convert Custom Extension to a LogicalNode")),
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
             LogicalPlan::Sort(plan) => PySort::from(plan.clone()).to_variant(py),
             LogicalPlan::TableScan(plan) => PyTableScan::from(plan.clone()).to_variant(py),
-            other => Err(py_runtime_err(format!(
+            other => Err(py_unsupported_variant_err(format!(
                 "Cannot convert this plan to a LogicalNode: {:?}",
                 other
             ))),
