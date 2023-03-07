@@ -15,9 +15,31 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use datafusion_expr::Extension;
 use pyo3::prelude::*;
 
+use crate::sql::logical::PyLogicalPlan;
 
-trait PyLogicalNode {
-    fn to_variant(&self, py: Python) -> PyResult<PyObject>;
+use super::logical_node::LogicalNode;
+
+#[pyclass(name = "Extension", module = "datafusion.expr", subclass)]
+#[derive(Clone)]
+pub struct PyExtension {
+    pub node: Extension,
+}
+
+impl From<Extension> for PyExtension {
+    fn from(node: Extension) -> PyExtension {
+        PyExtension { node }
+    }
+}
+
+impl LogicalNode for PyExtension {
+    fn inputs(&self) -> Vec<PyLogicalPlan> {
+        vec![]
+    }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

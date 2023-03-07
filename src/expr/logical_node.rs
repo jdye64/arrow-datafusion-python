@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use pyo3::{Python, PyResult, PyObject};
+use pyo3::{PyObject, PyResult, Python};
 
 use crate::sql::logical::PyLogicalPlan;
 

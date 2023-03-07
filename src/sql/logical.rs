@@ -21,6 +21,7 @@ use crate::errors::py_unsupported_variant_err;
 use crate::expr::aggregate::PyAggregate;
 use crate::expr::analyze::PyAnalyze;
 use crate::expr::empty_relation::PyEmptyRelation;
+use crate::expr::extension::PyExtension;
 use crate::expr::filter::PyFilter;
 use crate::expr::limit::PyLimit;
 use crate::expr::logical_node::LogicalNode;
@@ -57,7 +58,7 @@ impl PyLogicalPlan {
             LogicalPlan::Aggregate(plan) => PyAggregate::from(plan.clone()).to_variant(py),
             LogicalPlan::Analyze(plan) => PyAnalyze::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
-            LogicalPlan::Extension(_node) => Err(py_unsupported_variant_err("Cannot convert Custom Extension to a LogicalNode")),
+            LogicalPlan::Extension(node) => PyExtension::from(node.clone()).to_variant(py),
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
