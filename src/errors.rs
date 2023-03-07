@@ -29,6 +29,7 @@ pub enum DataFusionError {
     ArrowError(ArrowError),
     Common(String),
     PythonError(PyErr),
+    UnsupportedVariant(String),
 }
 
 impl fmt::Display for DataFusionError {
@@ -38,6 +39,7 @@ impl fmt::Display for DataFusionError {
             DataFusionError::ArrowError(e) => write!(f, "Arrow error: {e:?}"),
             DataFusionError::PythonError(e) => write!(f, "Python error {e:?}"),
             DataFusionError::Common(e) => write!(f, "{e}"),
+            DataFusionError::UnsupportedVariant(e) => write!(f, "{e}"),
         }
     }
 }
@@ -81,4 +83,8 @@ pub fn py_runtime_err(e: impl Debug) -> PyErr {
 
 pub fn py_datafusion_err(e: impl Debug) -> PyErr {
     PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{e:?}"))
+}
+
+pub fn py_unsupported_variant_err(e: impl Debug) -> PyErr {
+    PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("{e:?}"))
 }

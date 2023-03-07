@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use crate::errors::py_runtime_err;
+use crate::errors::{py_runtime_err, py_unsupported_variant_err};
 use crate::expr::aggregate::PyAggregate;
 use crate::expr::analyze::PyAnalyze;
 use crate::expr::empty_relation::PyEmptyRelation;
@@ -61,8 +61,8 @@ impl PyLogicalPlan {
             LogicalPlan::Projection(plan) => Ok(PyProjection::from(plan.clone()).into_py(py)),
             LogicalPlan::Sort(plan) => Ok(PySort::from(plan.clone()).into_py(py)),
             LogicalPlan::TableScan(plan) => Ok(PyTableScan::from(plan.clone()).into_py(py)),
-            other => Err(py_runtime_err(format!(
-                "Cannot convert this plan to a LogicalNode: {:?}",
+            other => Err(py_unsupported_variant_err(format!(
+                "Cannot convert this plan to a LogicalNode: `{:?}`",
                 other
             ))),
         })
