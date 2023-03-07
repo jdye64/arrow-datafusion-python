@@ -15,68 +15,72 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use crate::{common::df_schema::PyDFSchema, sql::logical::PyLogicalPlan};
-use datafusion_expr::EmptyRelation;
+use datafusion_expr::logical_plan::Union;
 use pyo3::prelude::*;
 use std::fmt::{self, Display, Formatter};
 
-use super::logical_node::LogicalNode;
+use crate::common::df_schema::PyDFSchema;
+use crate::expr::logical_node::LogicalNode;
+use crate::sql::logical::PyLogicalPlan;
 
-#[pyclass(name = "EmptyRelation", module = "datafusion.expr", subclass)]
+#[pyclass(name = "Union", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
-pub struct PyEmptyRelation {
-    empty: EmptyRelation,
+pub struct PyUnion {
+    union_: Union,
 }
 
-impl From<PyEmptyRelation> for EmptyRelation {
-    fn from(empty_relation: PyEmptyRelation) -> Self {
-        empty_relation.empty
+impl From<Union> for PyUnion {
+    fn from(union_: Union) -> PyUnion {
+        PyUnion { union_ }
     }
 }
 
-impl From<EmptyRelation> for PyEmptyRelation {
-    fn from(empty: EmptyRelation) -> PyEmptyRelation {
-        PyEmptyRelation { empty }
+impl From<PyUnion> for Union {
+    fn from(union_: PyUnion) -> Self {
+        union_.union_
     }
 }
 
-impl Display for PyEmptyRelation {
+impl Display for PyUnion {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "Empty Relation
-            Produce One Row: {:?}
-            Schema: {:?}",
-            &self.empty.produce_one_row, &self.empty.schema
+            "Union
+            \nInputs: {:?}
+            \nSchema: {:?}",
+            &self.union_.inputs, &self.union_.schema,
         )
     }
 }
 
 #[pymethods]
-impl PyEmptyRelation {
-    fn produce_one_row(&self) -> PyResult<bool> {
-        Ok(self.empty.produce_one_row)
+impl PyUnion {
+    /// Retrieves the input `LogicalPlan` to this `Union` node
+    fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
+        Ok(Self::inputs(self))
     }
 
-    /// Resulting Schema for this `EmptyRelation` node instance
+    /// Resulting Schema for this `Union` node instance
     fn schema(&self) -> PyResult<PyDFSchema> {
-        Ok((*self.empty.schema).clone().into())
+        Ok(self.union_.schema.as_ref().clone().into())
     }
 
-    /// Get a String representation of this column
-    fn __repr__(&self) -> String {
-        format!("{}", self)
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("Union({})", self))
     }
 
     fn __name__(&self) -> PyResult<String> {
-        Ok("EmptyRelation".to_string())
+        Ok("Union".to_string())
     }
 }
 
-
-impl LogicalNode for PyEmptyRelation {
+impl LogicalNode for PyUnion {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
-        vec![]
+        self.union_
+            .inputs
+            .iter()
+            .map(|x| x.as_ref().clone().into())
+            .collect()
     }
 
     fn to_variant(&self, py: Python) -> PyResult<PyObject> {

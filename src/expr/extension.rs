@@ -15,26 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use datafusion_expr::{TypeSignature, Volatility};
 use pyo3::prelude::*;
 
-#[allow(dead_code)]
-#[pyclass(name = "Signature", module = "datafusion.expr", subclass)]
-#[allow(dead_code)]
-#[derive(Clone)]
-pub struct PySignature {
-    type_signature: TypeSignature,
-    volatility: Volatility,
-}
 
-impl PySignature {
-    pub fn new(type_signature: TypeSignature, volatility: Volatility) -> Self {
-        Self {
-            type_signature,
-            volatility,
-        }
-    }
+trait PyLogicalNode {
+    fn to_variant(&self, py: Python) -> PyResult<PyObject>;
 }
-
-#[pymethods]
-impl PySignature {}
