@@ -85,4 +85,8 @@ impl LogicalNode for PyLimit {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
         vec![PyLogicalPlan::from((*self.limit.input).clone())]
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

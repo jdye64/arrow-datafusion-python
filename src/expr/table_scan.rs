@@ -131,4 +131,8 @@ impl LogicalNode for PyTableScan {
         // table scans are leaf nodes and do not have inputs
         vec![]
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

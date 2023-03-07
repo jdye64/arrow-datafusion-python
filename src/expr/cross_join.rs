@@ -87,4 +87,8 @@ impl LogicalNode for PyCrossJoin {
             PyLogicalPlan::from((*self.cross_join.right).clone()),
         ]
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

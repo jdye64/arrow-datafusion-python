@@ -103,4 +103,8 @@ impl LogicalNode for PyAggregate {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
         vec![PyLogicalPlan::from((*self.aggregate.input).clone())]
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

@@ -178,4 +178,8 @@ impl LogicalNode for PyJoin {
             PyLogicalPlan::from((*self.join.right).clone()),
         ]
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

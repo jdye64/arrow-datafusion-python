@@ -82,4 +82,8 @@ impl LogicalNode for PyUnion {
             .map(|x| x.as_ref().clone().into())
             .collect()
     }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
+    }
 }

@@ -50,6 +50,7 @@ pub mod column;
 pub mod cross_join;
 pub mod empty_relation;
 pub mod exists;
+pub mod extension;
 pub mod filter;
 pub mod grouping_set;
 pub mod in_list;
