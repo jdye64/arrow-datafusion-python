@@ -15,9 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
+
 class LogicalNode:
     def __init__(self):
-        print(f"Creaing LogicalNode instance")
+        print("Creaing LogicalNode instance")
 
     def type(self):
-        print(f"Printing the type of the LogicalNode")
+        print("Printing the type of the LogicalNode")
