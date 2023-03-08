@@ -34,6 +34,13 @@ impl From<Extension> for PyExtension {
     }
 }
 
+#[pymethods]
+impl PyExtension {
+    fn empty(&self) -> bool {
+        true
+    }
+}
+
 impl LogicalNode for PyExtension {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
         vec![]
