@@ -36,6 +36,11 @@ impl From<Extension> for PyExtension {
 
 #[pymethods]
 impl PyExtension {
+    #[new]
+    fn new(ext: PyExtension) -> Self {
+        PyExtension { node: ext.node }
+    }
+
     fn empty(&self) -> bool {
         true
     }
