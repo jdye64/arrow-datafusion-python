@@ -44,6 +44,22 @@ impl PyLiteral {
         format!("{}", self.value.get_datatype())
     }
 
+    fn value_f32(&self) -> PyResult<f32> {
+        if let ScalarValue::Float32(Some(n)) = &self.value {
+            Ok(*n)
+        } else {
+            Err(py_runtime_err("Cannot access value as f32"))
+        }
+    }
+
+    fn value_f64(&self) -> PyResult<f64> {
+        if let ScalarValue::Float64(Some(n)) = &self.value {
+            Ok(*n)
+        } else {
+            Err(py_runtime_err("Cannot access value as f64"))
+        }
+    }
+
     fn value_i32(&self) -> PyResult<i32> {
         if let ScalarValue::Int32(Some(n)) = &self.value {
             Ok(*n)
@@ -66,6 +82,10 @@ impl PyLiteral {
         } else {
             Err(py_runtime_err("Cannot access value as string"))
         }
+    }
+
+    fn into_type(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
     }
 
     fn __repr__(&self) -> PyResult<String> {
