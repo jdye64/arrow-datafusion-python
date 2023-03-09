@@ -25,24 +25,20 @@ use super::logical_node::LogicalNode;
 #[pyclass(name = "Extension", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyExtension {
-    pub node: Option<Extension>,
+    pub node: Extension,
 }
 
 impl From<Extension> for PyExtension {
     fn from(node: Extension) -> PyExtension {
-        PyExtension { node: Some(node) }
+        PyExtension { node: node }
     }
 }
 
 #[pymethods]
 impl PyExtension {
-    #[new]
-    fn new() -> Self {
-        PyExtension { node: None }
-    }
 
-    fn empty(&self) -> bool {
-        true
+    fn name(&self) -> PyResult<String> {
+        Ok(self.node.node.name().to_string())
     }
 }
 
