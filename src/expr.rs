@@ -49,6 +49,7 @@ pub mod case;
 pub mod cast;
 pub mod column;
 pub mod cross_join;
+pub mod distinct;
 pub mod empty_relation;
 pub mod exists;
 pub mod extension;
@@ -566,6 +567,7 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_class::<between::PyBetween>()?;
     m.add_class::<indexed_field::PyGetIndexedField>()?;
     m.add_class::<extension::PyExtension>()?;
+    m.add_class::<distinct::PyDistinct>()?;
     // operators
     m.add_class::<table_scan::PyTableScan>()?;
     m.add_class::<projection::PyProjection>()?;
