@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::fmt::{self, Display, Formatter};
+
 use datafusion_expr::SubqueryAlias;
 use pyo3::prelude::*;
 
@@ -40,6 +42,21 @@ impl From<SubqueryAlias> for PySubqueryAlias {
     }
 }
 
+impl Display for PySubqueryAlias {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "SubqueryAlias
+            \nInputs(s): {:?}
+            \nAlias: {:?}
+            \nSchema: {:?}",
+            self.subquery_alias.input,
+            self.subquery_alias.alias,
+            self.subquery_alias.schema,
+        )
+    }
+}
+
 #[pymethods]
 impl PySubqueryAlias {
 
@@ -54,7 +71,7 @@ impl PySubqueryAlias {
     }
 
     fn alias(&self) -> PyResult<String> {
-        Ok(self.subquery_alias.alias)
+        Ok(self.subquery_alias.alias.clone())
     }
 
     fn __repr__(&self) -> PyResult<String> {
