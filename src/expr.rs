@@ -21,9 +21,9 @@ use std::convert::{From, Into};
 
 use datafusion::arrow::datatypes::DataType;
 use datafusion::arrow::pyarrow::PyArrowType;
-use datafusion_expr::{col, lit, Cast, Expr, GetIndexedField, Between, Like, BinaryExpr, Case, TryCast};
+use datafusion_expr::{col, lit, Cast, Expr, GetIndexedField, Between, Like, BinaryExpr, Case, TryCast, Operator, BuiltinScalarFunction};
 
-use crate::errors::py_runtime_err;
+use crate::errors::{py_runtime_err, py_type_err};
 use crate::expr::aggregate_expr::PyAggregateFunction;
 use crate::expr::binary_expr::PyBinaryExpr;
 use crate::expr::column::PyColumn;
@@ -237,6 +237,189 @@ impl PyExpr {
             ))),
         }
     }
+
+
+    pub fn get_type(&self) -> PyResult<String> {
+        Ok(String::from(match &self.expr {
+            Expr::BinaryExpr(BinaryExpr {
+                left: _,
+                op,
+                right: _,
+            }) => match op {
+                Operator::Eq
+                | Operator::NotEq
+                | Operator::Lt
+                | Operator::LtEq
+                | Operator::Gt
+                | Operator::GtEq
+                | Operator::And
+                | Operator::Or
+                | Operator::IsDistinctFrom
+                | Operator::IsNotDistinctFrom
+                | Operator::RegexMatch
+                | Operator::RegexIMatch
+                | Operator::RegexNotMatch
+                | Operator::RegexNotIMatch => "BOOLEAN",
+                Operator::Plus | Operator::Minus | Operator::Multiply | Operator::Modulo => {
+                    "BIGINT"
+                }
+                Operator::Divide => "FLOAT",
+                Operator::StringConcat => "VARCHAR",
+                Operator::BitwiseShiftLeft
+                | Operator::BitwiseShiftRight
+                | Operator::BitwiseXor
+                | Operator::BitwiseAnd
+                | Operator::BitwiseOr => {
+                    // the type here should be the same as the type of the left expression
+                    // but we can only compute that if we have the schema available
+                    return Err(py_type_err(
+                        "Bitwise operators unsupported in get_type".to_string(),
+                    ));
+                }
+            },
+            Expr::Literal(scalar_value) => match scalar_value {
+                ScalarValue::Boolean(_value) => "Boolean",
+                ScalarValue::Float32(_value) => "Float32",
+                ScalarValue::Float64(_value) => "Float64",
+                ScalarValue::Decimal128(_value, ..) => "Decimal128",
+                ScalarValue::Dictionary(..) => "Dictionary",
+                ScalarValue::Int8(_value) => "Int8",
+                ScalarValue::Int16(_value) => "Int16",
+                ScalarValue::Int32(_value) => "Int32",
+                ScalarValue::Int64(_value) => "Int64",
+                ScalarValue::UInt8(_value) => "UInt8",
+                ScalarValue::UInt16(_value) => "UInt16",
+                ScalarValue::UInt32(_value) => "UInt32",
+                ScalarValue::UInt64(_value) => "UInt64",
+                ScalarValue::Utf8(_value) => "Utf8",
+                ScalarValue::LargeUtf8(_value) => "LargeUtf8",
+                ScalarValue::Binary(_value) => "Binary",
+                ScalarValue::LargeBinary(_value) => "LargeBinary",
+                ScalarValue::Date32(_value) => "Date32",
+                ScalarValue::Date64(_value) => "Date64",
+                ScalarValue::Time32Second(_value) => "Time32",
+                ScalarValue::Time32Millisecond(_value) => "Time32",
+                ScalarValue::Time64Microsecond(_value) => "Time64",
+                ScalarValue::Time64Nanosecond(_value) => "Time64",
+                ScalarValue::Null => "Null",
+                ScalarValue::TimestampSecond(..) => "TimestampSecond",
+                ScalarValue::TimestampMillisecond(..) => "TimestampMillisecond",
+                ScalarValue::TimestampMicrosecond(..) => "TimestampMicrosecond",
+                ScalarValue::TimestampNanosecond(..) => "TimestampNanosecond",
+                ScalarValue::IntervalYearMonth(..) => "IntervalYearMonth",
+                ScalarValue::IntervalDayTime(..) => "IntervalDayTime",
+                ScalarValue::IntervalMonthDayNano(..) => "IntervalMonthDayNano",
+                ScalarValue::List(..) => "List",
+                ScalarValue::Struct(..) => "Struct",
+                ScalarValue::FixedSizeBinary(_, _) => "FixedSizeBinary",
+            },
+            Expr::ScalarFunction { fun, args: _ } => match fun {
+                BuiltinScalarFunction::Abs => "Abs",
+                BuiltinScalarFunction::DatePart => "DatePart",
+                _ => {
+                    return Err(py_type_err(format!(
+                        "Catch all triggered for ScalarFunction in get_type; {fun:?}"
+                    )))
+                }
+            },
+            Expr::Cast(Cast { expr: _, data_type }) => match data_type {
+                DataType::Null => "NULL",
+                DataType::Boolean => "BOOLEAN",
+                DataType::Int8 | DataType::UInt8 => "TINYINT",
+                DataType::Int16 | DataType::UInt16 => "SMALLINT",
+                DataType::Int32 | DataType::UInt32 => "INTEGER",
+                DataType::Int64 | DataType::UInt64 => "BIGINT",
+                DataType::Float32 => "FLOAT",
+                DataType::Float64 => "DOUBLE",
+                DataType::Timestamp { .. } => "TIMESTAMP",
+                DataType::Date32 | DataType::Date64 => "DATE",
+                DataType::Time32(..) => "TIME32",
+                DataType::Time64(..) => "TIME64",
+                DataType::Duration(..) => "DURATION",
+                DataType::Interval(..) => "INTERVAL",
+                DataType::Binary => "BINARY",
+                DataType::FixedSizeBinary(..) => "FIXEDSIZEBINARY",
+                DataType::LargeBinary => "LARGEBINARY",
+                DataType::Utf8 => "VARCHAR",
+                DataType::LargeUtf8 => "BIGVARCHAR",
+                DataType::List(..) => "LIST",
+                DataType::FixedSizeList(..) => "FIXEDSIZELIST",
+                DataType::LargeList(..) => "LARGELIST",
+                DataType::Struct(..) => "STRUCT",
+                DataType::Union(..) => "UNION",
+                DataType::Dictionary(..) => "DICTIONARY",
+                DataType::Decimal128(..) => "DECIMAL",
+                DataType::Decimal256(..) => "DECIMAL",
+                DataType::Map(..) => "MAP",
+                _ => {
+                    return Err(py_type_err(format!(
+                        "Catch all triggered for Cast in get_type; {data_type:?}"
+                    )))
+                }
+            },
+            _ => {
+                return Err(py_type_err(format!(
+                    "Catch all triggered in get_type; {:?}",
+                    &self.expr
+                )))
+            }
+        }))
+    }
+
+
+    // pub fn operator_name(&self) -> PyResult<String> {
+    //     Ok(match &self.expr {
+    //         Expr::BinaryExpr(BinaryExpr {
+    //             left: _,
+    //             op,
+    //             right: _,
+    //         }) => format!("{op}"),
+    //         Expr::ScalarFunction { fun, args: _ } => format!("{fun}"),
+    //         Expr::ScalarUDF { fun, .. } => fun.name.clone(),
+    //         Expr::Cast { .. } => "cast".to_string(),
+    //         Expr::Between { .. } => "between".to_string(),
+    //         Expr::Case { .. } => "case".to_string(),
+    //         Expr::IsNull(..) => "is null".to_string(),
+    //         Expr::IsNotNull(..) => "is not null".to_string(),
+    //         Expr::IsTrue(_) => "is true".to_string(),
+    //         Expr::IsFalse(_) => "is false".to_string(),
+    //         Expr::IsUnknown(_) => "is unknown".to_string(),
+    //         Expr::IsNotTrue(_) => "is not true".to_string(),
+    //         Expr::IsNotFalse(_) => "is not false".to_string(),
+    //         Expr::IsNotUnknown(_) => "is not unknown".to_string(),
+    //         Expr::InList { .. } => "in list".to_string(),
+    //         Expr::Negative(..) => "negative".to_string(),
+    //         Expr::Not(..) => "not".to_string(),
+    //         Expr::Like(Like { negated, .. }) => {
+    //             if *negated {
+    //                 "not like".to_string()
+    //             } else {
+    //                 "like".to_string()
+    //             }
+    //         }
+    //         Expr::ILike(Like { negated, .. }) => {
+    //             if *negated {
+    //                 "not ilike".to_string()
+    //             } else {
+    //                 "ilike".to_string()
+    //             }
+    //         }
+    //         Expr::SimilarTo(Like { negated, .. }) => {
+    //             if *negated {
+    //                 "not similar to".to_string()
+    //             } else {
+    //                 "similar to".to_string()
+    //             }
+    //         }
+    //         _ => {
+    //             return Err(py_type_err(format!(
+    //                 "Catch all triggered in get_operator_name: {:?}",
+    //                 &self.expr
+    //             )))
+    //         }
+    //     })
+    // }
+    
 
     // Name of the variant as it would appear in the SQL
     fn variant_name(&self) -> PyResult<String> {
