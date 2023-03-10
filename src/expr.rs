@@ -238,6 +238,11 @@ impl PyExpr {
         }
     }
 
+    // Name of the variant as it would appear in the SQL
+    fn variant_name(&self) -> PyResult<String> {
+        Ok(self.expr.variant_name().to_string())
+    }
+
     /// Returns the name of this expression as it should appear in a schema. This name
     /// will not include any CAST expressions.
     fn display_name(&self) -> PyResult<String> {
