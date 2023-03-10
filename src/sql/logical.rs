@@ -25,6 +25,7 @@ use crate::expr::create_view::PyCreateView;
 use crate::expr::distinct::PyDistinct;
 use crate::expr::drop_table::PyDropTable;
 use crate::expr::empty_relation::PyEmptyRelation;
+use crate::expr::explain::PyExplain;
 use crate::expr::extension::PyExtension;
 use crate::expr::filter::PyFilter;
 use crate::expr::limit::PyLimit;
@@ -71,6 +72,7 @@ impl PyLogicalPlan {
             LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             LogicalPlan::DropTable(plan) => PyDropTable::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
+            LogicalPlan::Explain(plan) => PyExplain::from(plan.clone()).to_variant(py),
             LogicalPlan::Extension(node) => PyExtension::from(node.clone()).to_variant(py),
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),

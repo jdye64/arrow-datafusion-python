@@ -58,6 +58,7 @@ pub mod distinct;
 pub mod drop_table;
 pub mod empty_relation;
 pub mod exists;
+pub mod explain;
 pub mod extension;
 pub mod filter;
 pub mod grouping_set;
@@ -570,6 +571,7 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_class::<drop_table::PyDropTable>()?;
     m.add_class::<repartition::PyRepartition>()?;
     m.add_class::<repartition::PyPartitioning>()?;
+    m.add_class::<explain::PyExplain>()?;
     // operators
     m.add_class::<table_scan::PyTableScan>()?;
     m.add_class::<projection::PyProjection>()?;

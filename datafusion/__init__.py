@@ -82,6 +82,7 @@ from .expr import (
     DropTable,
     Repartition,
     Partitioning,
+    Explain,
 )
 
 __version__ = importlib_metadata.version(__name__)
@@ -139,6 +140,7 @@ __all__ = [
     "DropTable",
     "Repartition",
     "Partitioning",
+    "Explain",
 ]
 
 
