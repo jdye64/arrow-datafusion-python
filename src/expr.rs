@@ -69,6 +69,7 @@ pub mod scalar_variable;
 pub mod signature;
 pub mod sort;
 pub mod subquery;
+pub mod subquery_alias;
 pub mod table_scan;
 pub mod union;
 
@@ -252,6 +253,7 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_class::<in_list::PyInList>()?;
     m.add_class::<exists::PyExists>()?;
     m.add_class::<subquery::PySubquery>()?;
+    m.add_class::<subquery_alias::PySubqueryAlias>()?;
     m.add_class::<in_subquery::PyInSubquery>()?;
     m.add_class::<scalar_subquery::PyScalarSubquery>()?;
     m.add_class::<placeholder::PyPlaceholder>()?;

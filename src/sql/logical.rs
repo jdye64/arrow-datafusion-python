@@ -28,6 +28,7 @@ use crate::expr::logical_node::LogicalNode;
 use crate::expr::projection::PyProjection;
 use crate::expr::sort::PySort;
 use crate::expr::subquery::PySubquery;
+use crate::expr::subquery_alias::PySubqueryAlias;
 use crate::expr::table_scan::PyTableScan;
 use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
@@ -64,7 +65,8 @@ impl PyLogicalPlan {
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
             LogicalPlan::Sort(plan) => PySort::from(plan.clone()).to_variant(py),
-            LogicalPlan::SubqueryAlias(plan) => PySubquery::from(plan.clone()).to_variant(py),
+            LogicalPlan::Subquery(plan) => PySubquery::from(plan.clone()).to_variant(py),
+            LogicalPlan::SubqueryAlias(plan) => PySubqueryAlias::from(plan.clone()).to_variant(py),
             LogicalPlan::TableScan(plan) => PyTableScan::from(plan.clone()).to_variant(py),
             other => Err(py_unsupported_variant_err(format!(
                 "Cannot convert this plan to a LogicalNode: {:?}",
