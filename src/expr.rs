@@ -569,6 +569,7 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_class::<create_view::PyCreateView>()?;
     m.add_class::<drop_table::PyDropTable>()?;
     m.add_class::<repartition::PyRepartition>()?;
+    m.add_class::<repartition::PyPartitioning>()?;
     // operators
     m.add_class::<table_scan::PyTableScan>()?;
     m.add_class::<projection::PyProjection>()?;
