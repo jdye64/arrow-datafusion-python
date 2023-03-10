@@ -18,7 +18,7 @@
 use datafusion_expr::SubqueryAlias;
 use pyo3::prelude::*;
 
-use crate::sql::logical::PyLogicalPlan;
+use crate::{sql::logical::PyLogicalPlan, common::df_schema::PyDFSchema};
 
 use super::logical_node::LogicalNode;
 
@@ -37,6 +37,32 @@ impl From<PySubqueryAlias> for SubqueryAlias {
 impl From<SubqueryAlias> for PySubqueryAlias {
     fn from(subquery_alias: SubqueryAlias) -> PySubqueryAlias {
         PySubqueryAlias { subquery_alias }
+    }
+}
+
+#[pymethods]
+impl PySubqueryAlias {
+
+    /// Retrieves the input `LogicalPlan` to this `Projection` node
+    fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
+        Ok(Self::inputs(self))
+    }
+
+    /// Resulting Schema for this `Projection` node instance
+    fn schema(&self) -> PyResult<PyDFSchema> {
+        Ok((*self.subquery_alias.schema).clone().into())
+    }
+
+    fn alias(&self) -> PyResult<String> {
+        Ok(self.subquery_alias.alias)
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("Projection({})", self))
+    }
+
+    fn __name__(&self) -> PyResult<String> {
+        Ok("Projection".to_string())
     }
 }
 
