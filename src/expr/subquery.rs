@@ -18,6 +18,10 @@
 use datafusion_expr::Subquery;
 use pyo3::prelude::*;
 
+use crate::sql::logical::PyLogicalPlan;
+
+use super::logical_node::LogicalNode;
+
 #[pyclass(name = "Subquery", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PySubquery {
@@ -33,5 +37,15 @@ impl From<PySubquery> for Subquery {
 impl From<Subquery> for PySubquery {
     fn from(subquery: Subquery) -> PySubquery {
         PySubquery { subquery }
+    }
+}
+
+impl LogicalNode for PySubquery {
+    fn inputs(&self) -> Vec<PyLogicalPlan> {
+        vec![PyLogicalPlan::from((*self.subquery.subquery).clone())]
+    }
+
+    fn to_variant(&self, py: Python) -> PyResult<PyObject> {
+        Ok(self.clone().into_py(py))
     }
 }
