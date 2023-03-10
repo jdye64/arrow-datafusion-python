@@ -17,7 +17,7 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use datafusion_expr::{logical_plan::Explain, LogicalPlan};
+use datafusion_expr::{logical_plan::Explain, LogicalPlan, StringifiedPlan};
 use pyo3::prelude::*;
 
 use crate::{sql::logical::PyLogicalPlan, errors::py_type_err, common::df_schema::PyDFSchema};
@@ -61,6 +61,24 @@ impl Display for PyExplain {
     }
 }
 
+#[pyclass(name = "StringifiedPlan", module = "datafusion.expr", subclass)]
+#[derive(Clone)]
+pub struct PyStringifiedPlan {
+    plan: StringifiedPlan,
+}
+
+impl From<PyStringifiedPlan> for StringifiedPlan {
+    fn from(plan: PyStringifiedPlan) -> Self {
+        plan.plan
+    }
+}
+
+impl From<StringifiedPlan> for PyStringifiedPlan {
+    fn from(plan: StringifiedPlan) -> PyStringifiedPlan {
+        PyStringifiedPlan { plan }
+    }
+}
+
 #[pymethods]
 impl PyExplain {
     fn explain_string(&self) -> PyResult<Vec<String>> {
@@ -78,6 +96,17 @@ impl PyExplain {
     fn plan(&self) -> PyResult<PyLogicalPlan> {
         Ok(PyLogicalPlan::from((*self.explain.plan).clone()))
     }
+
+    fn plan_strings(&self) -> PyResult<Vec<String>> {
+        Ok(self.explain.stringified_plans
+            .iter()
+            .map(|e| (*e.plan).clone())
+            .collect())
+    }
+
+    // fn stringified_plans(&self) -> PyResult<Vec<StringifiedPlan>> {
+    //     Ok(self.explain.stringified_plans)
+    // }
 
     fn schema(&self) -> PyDFSchema {
         (*self.explain.schema).clone().into()
