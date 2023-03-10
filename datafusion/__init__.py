@@ -77,6 +77,9 @@ from .expr import (
     TryCast,
     Between,
     Extension,
+    CreateMemoryTable,
+    CreateView,
+    DropTable,
 )
 
 __version__ = importlib_metadata.version(__name__)
@@ -129,6 +132,9 @@ __all__ = [
     "TryCast",
     "Between",
     "Extension",
+    "CreateMemoryTable",
+    "CreateView",
+    "DropTable",
 ]
 
 

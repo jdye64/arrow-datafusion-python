@@ -33,6 +33,7 @@ use crate::expr::subquery_alias::PySubqueryAlias;
 use crate::expr::table_scan::PyTableScan;
 use crate::expr::create_memory_table::PyCreateMemoryTable;
 use crate::expr::create_view::PyCreateView;
+use crate::expr::drop_table::PyDropTable;
 use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
 
@@ -65,6 +66,7 @@ impl PyLogicalPlan {
             LogicalPlan::CreateMemoryTable(plan) => PyCreateMemoryTable::from(plan.clone()).to_variant(py),
             LogicalPlan::CreateView(plan) => PyCreateView::from(plan.clone()).to_variant(py),
             LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
+            LogicalPlan::DropTable(plan) => PyDropTable::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
             LogicalPlan::Extension(node) => PyExtension::from(node.clone()).to_variant(py),
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
