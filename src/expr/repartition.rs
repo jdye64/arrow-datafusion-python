@@ -17,75 +17,85 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use datafusion_expr::CreateView;
+use datafusion_expr::{logical_plan::Repartition, Partitioning};
 use pyo3::prelude::*;
 
 use crate::sql::logical::PyLogicalPlan;
 
 use super::logical_node::LogicalNode;
 
-#[pyclass(name = "CreateView", module = "datafusion.expr", subclass)]
+#[pyclass(name = "Repartition", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
-pub struct PyCreateView {
-    create: CreateView,
+pub struct PyRepartition {
+    repartition: Repartition,
 }
 
-impl From<PyCreateView> for CreateView {
-    fn from(create: PyCreateView) -> Self {
-        create.create
+#[pyclass(name = "Partitioning", module = "datafusion.expr", subclass)]
+#[derive(Clone)]
+pub struct PyPartitioning {
+    partitioning: Partitioning,
+}
+
+impl From<PyPartitioning> for Partitioning {
+    fn from(partitioning: PyPartitioning) -> Self {
+        partitioning.partitioning
     }
 }
 
-impl From<CreateView> for PyCreateView {
-    fn from(create: CreateView) -> PyCreateView {
-        PyCreateView { create }
+impl From<Partitioning> for PyPartitioning {
+    fn from(partitioning: Partitioning) -> Self {
+        PyPartitioning { partitioning }
     }
 }
 
-impl Display for PyCreateView {
+impl From<PyRepartition> for Repartition {
+    fn from(repartition: PyRepartition) -> Self {
+        repartition.repartition
+    }
+}
+
+impl From<Repartition> for PyRepartition {
+    fn from(repartition: Repartition) -> PyRepartition {
+        PyRepartition { repartition }
+    }
+}
+
+impl Display for PyRepartition {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "CreateView
-            name: {:?}
+            "Repartition
             input: {:?}
-            or_replace: {:?}
-            definition: {:?}",
-            &self.create.name, &self.create.input, &self.create.or_replace, &self.create.definition,
+            partitioning_scheme: {:?}",
+            &self.repartition.input, &self.repartition.partitioning_scheme,
         )
     }
 }
 
 #[pymethods]
-impl PyCreateView {
-    fn name(&self) -> PyResult<String> {
-        Ok(self.create.name.to_string())
-    }
-
+impl PyRepartition {
     fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
         Ok(Self::inputs(self))
     }
 
-    fn or_replace(&self) -> bool {
-        self.create.or_replace
-    }
-
-    fn definition(&self) -> PyResult<Option<String>> {
-        Ok(self.create.definition.clone())
+    fn partitioning_scheme(&self) -> PyResult<PyPartitioning> {
+        Ok(PyPartitioning {
+            partitioning: self.repartition.partitioning_scheme.clone(),
+        })
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("CreateView({})", self))
+        Ok(format!("Repartition({})", self))
     }
 
     fn __name__(&self) -> PyResult<String> {
-        Ok("CreateView".to_string())
+        Ok("Repartition".to_string())
     }
 }
 
-impl LogicalNode for PyCreateView {
+impl LogicalNode for PyRepartition {
     fn inputs(&self) -> Vec<PyLogicalPlan> {
-        vec![PyLogicalPlan::from((*self.create.input).clone())]
+        vec![PyLogicalPlan::from((*self.repartition.input).clone())]
     }
 
     fn to_variant(&self, py: Python) -> PyResult<PyObject> {

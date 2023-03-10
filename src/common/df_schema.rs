@@ -17,10 +17,10 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use datafusion_common::{DFField, DFSchema};
+use datafusion_common::DFSchema;
 use pyo3::prelude::*;
 
-use super::df_field::PyDFField;
+use crate::common::df_field::PyDFField;
 
 #[derive(Debug, Clone)]
 #[pyclass(name = "DFSchema", module = "datafusion.common", subclass)]

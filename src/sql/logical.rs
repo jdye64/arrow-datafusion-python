@@ -20,20 +20,21 @@ use std::sync::Arc;
 use crate::errors::py_unsupported_variant_err;
 use crate::expr::aggregate::PyAggregate;
 use crate::expr::analyze::PyAnalyze;
+use crate::expr::create_memory_table::PyCreateMemoryTable;
+use crate::expr::create_view::PyCreateView;
+use crate::expr::distinct::PyDistinct;
+use crate::expr::drop_table::PyDropTable;
 use crate::expr::empty_relation::PyEmptyRelation;
 use crate::expr::extension::PyExtension;
-use crate::expr::distinct::PyDistinct;
 use crate::expr::filter::PyFilter;
 use crate::expr::limit::PyLimit;
 use crate::expr::logical_node::LogicalNode;
 use crate::expr::projection::PyProjection;
+use crate::expr::repartition::PyRepartition;
 use crate::expr::sort::PySort;
 use crate::expr::subquery::PySubquery;
 use crate::expr::subquery_alias::PySubqueryAlias;
 use crate::expr::table_scan::PyTableScan;
-use crate::expr::create_memory_table::PyCreateMemoryTable;
-use crate::expr::create_view::PyCreateView;
-use crate::expr::drop_table::PyDropTable;
 use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
 
@@ -63,7 +64,9 @@ impl PyLogicalPlan {
         Python::with_gil(|_| match self.plan.as_ref() {
             LogicalPlan::Aggregate(plan) => PyAggregate::from(plan.clone()).to_variant(py),
             LogicalPlan::Analyze(plan) => PyAnalyze::from(plan.clone()).to_variant(py),
-            LogicalPlan::CreateMemoryTable(plan) => PyCreateMemoryTable::from(plan.clone()).to_variant(py),
+            LogicalPlan::CreateMemoryTable(plan) => {
+                PyCreateMemoryTable::from(plan.clone()).to_variant(py)
+            }
             LogicalPlan::CreateView(plan) => PyCreateView::from(plan.clone()).to_variant(py),
             LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             LogicalPlan::DropTable(plan) => PyDropTable::from(plan.clone()).to_variant(py),
@@ -72,6 +75,7 @@ impl PyLogicalPlan {
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
+            LogicalPlan::Repartition(plan) => PyRepartition::from(plan.clone()).to_variant(py),
             LogicalPlan::Sort(plan) => PySort::from(plan.clone()).to_variant(py),
             LogicalPlan::Subquery(plan) => PySubquery::from(plan.clone()).to_variant(py),
             LogicalPlan::SubqueryAlias(plan) => PySubqueryAlias::from(plan.clone()).to_variant(py),

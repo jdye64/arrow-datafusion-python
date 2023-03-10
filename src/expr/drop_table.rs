@@ -20,14 +20,14 @@ use std::fmt::{self, Display, Formatter};
 use datafusion_expr::logical_plan::DropTable;
 use pyo3::prelude::*;
 
-use crate::{sql::logical::PyLogicalPlan, common::df_schema::PyDFSchema};
+use crate::sql::logical::PyLogicalPlan;
 
 use super::logical_node::LogicalNode;
 
 #[pyclass(name = "DropTable", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyDropTable {
-    drop: DropTable
+    drop: DropTable,
 }
 
 impl From<PyDropTable> for DropTable {
@@ -50,16 +50,13 @@ impl Display for PyDropTable {
             name: {:?}
             if_exists: {:?}
             schema: {:?}",
-            &self.drop.name,
-            &self.drop.if_exists,
-            &self.drop.schema,
+            &self.drop.name, &self.drop.if_exists, &self.drop.schema,
         )
     }
 }
 
 #[pymethods]
 impl PyDropTable {
-
     fn name(&self) -> PyResult<String> {
         Ok(self.drop.name.to_string())
     }

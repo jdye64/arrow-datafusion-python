@@ -36,7 +36,6 @@ impl From<Extension> for PyExtension {
 
 #[pymethods]
 impl PyExtension {
-
     fn name(&self) -> PyResult<String> {
         Ok(self.node.node.name().to_string())
     }

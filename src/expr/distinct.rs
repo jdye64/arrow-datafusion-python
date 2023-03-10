@@ -20,14 +20,14 @@ use std::fmt::{self, Display, Formatter};
 use datafusion_expr::Distinct;
 use pyo3::prelude::*;
 
-use crate::{sql::logical::PyLogicalPlan, common::df_schema::PyDFSchema};
+use crate::sql::logical::PyLogicalPlan;
 
 use super::logical_node::LogicalNode;
 
 #[pyclass(name = "Distinct", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyDistinct {
-    distinct: Distinct
+    distinct: Distinct,
 }
 
 impl From<PyDistinct> for Distinct {
@@ -55,7 +55,6 @@ impl Display for PyDistinct {
 
 #[pymethods]
 impl PyDistinct {
-
     /// Retrieves the input `LogicalPlan` to this `Projection` node
     fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
         Ok(Self::inputs(self))

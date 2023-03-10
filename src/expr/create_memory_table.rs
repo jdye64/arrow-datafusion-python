@@ -20,14 +20,14 @@ use std::fmt::{self, Display, Formatter};
 use datafusion_expr::CreateMemoryTable;
 use pyo3::prelude::*;
 
-use crate::{sql::logical::PyLogicalPlan, common::df_schema::PyDFSchema};
+use crate::sql::logical::PyLogicalPlan;
 
 use super::logical_node::LogicalNode;
 
 #[pyclass(name = "CreateMemoryTable", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyCreateMemoryTable {
-    create: CreateMemoryTable
+    create: CreateMemoryTable,
 }
 
 impl From<PyCreateMemoryTable> for CreateMemoryTable {
@@ -61,7 +61,6 @@ impl Display for PyCreateMemoryTable {
 
 #[pymethods]
 impl PyCreateMemoryTable {
-
     fn name(&self) -> PyResult<String> {
         Ok(self.create.name.to_string())
     }

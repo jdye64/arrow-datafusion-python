@@ -80,6 +80,8 @@ from .expr import (
     CreateMemoryTable,
     CreateView,
     DropTable,
+    Repartition,
+    Partitioning,
 )
 
 __version__ = importlib_metadata.version(__name__)
@@ -135,6 +137,8 @@ __all__ = [
     "CreateMemoryTable",
     "CreateView",
     "DropTable",
+    "Repartition",
+    "Partitioning",
 ]
 
 

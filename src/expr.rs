@@ -15,13 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use datafusion_expr::expr::{AggregateFunction, WindowFunction, Sort};
+use datafusion_expr::expr::{AggregateFunction, Sort, WindowFunction};
 use pyo3::{basic::CompareOp, prelude::*};
 use std::convert::{From, Into};
 
 use datafusion::arrow::datatypes::DataType;
 use datafusion::arrow::pyarrow::PyArrowType;
-use datafusion_expr::{col, lit, Cast, Expr, GetIndexedField, Between, Like, BinaryExpr, Case, TryCast, Operator, BuiltinScalarFunction};
+use datafusion_expr::{
+    col, lit, Between, BinaryExpr, BuiltinScalarFunction, Case, Cast, Expr, GetIndexedField, Like,
+    Operator, TryCast,
+};
 
 use crate::errors::{py_runtime_err, py_type_err};
 use crate::expr::aggregate_expr::PyAggregateFunction;
@@ -48,8 +51,11 @@ pub mod bool_expr;
 pub mod case;
 pub mod cast;
 pub mod column;
+pub mod create_memory_table;
+pub mod create_view;
 pub mod cross_join;
 pub mod distinct;
+pub mod drop_table;
 pub mod empty_relation;
 pub mod exists;
 pub mod extension;
@@ -65,6 +71,7 @@ pub mod literal;
 pub mod logical_node;
 pub mod placeholder;
 pub mod projection;
+pub mod repartition;
 pub mod scalar_function;
 pub mod scalar_subquery;
 pub mod scalar_variable;
@@ -74,9 +81,6 @@ pub mod subquery;
 pub mod subquery_alias;
 pub mod table_scan;
 pub mod union;
-pub mod create_memory_table;
-pub mod create_view;
-pub mod drop_table;
 
 /// A PyExpr that can be used on a DataFrame
 #[pyclass(name = "Expr", module = "datafusion.expr", subclass)]
@@ -129,15 +133,12 @@ impl PyExpr {
         })
     }
 
-
     /// Row expressions, Rex(s), operate on the concept of operands.
     pub fn get_operands(&self) -> PyResult<Vec<PyExpr>> {
         match &self.expr {
             // Expr variants that are themselves the operand to return
             Expr::Column(..) | Expr::ScalarVariable(..) | Expr::Literal(..) => {
-                Ok(vec![PyExpr::from(
-                    self.expr.clone()
-                )])
+                Ok(vec![PyExpr::from(self.expr.clone())])
             }
 
             // Expr(s) that house the Expr instance to return in their bounded params
@@ -156,19 +157,16 @@ impl PyExpr {
             | Expr::Cast(Cast { expr, .. })
             | Expr::TryCast(TryCast { expr, .. })
             | Expr::Sort(Sort { expr, .. })
-            | Expr::InSubquery { expr, .. } => {
-                Ok(vec![PyExpr::from(*expr.clone())])
-            }
+            | Expr::InSubquery { expr, .. } => Ok(vec![PyExpr::from(*expr.clone())]),
 
             // Expr variants containing a collection of Expr(s) for operands
             Expr::AggregateFunction(AggregateFunction { args, .. })
             | Expr::AggregateUDF { args, .. }
             | Expr::ScalarFunction { args, .. }
             | Expr::ScalarUDF { args, .. }
-            | Expr::WindowFunction(WindowFunction { args, .. }) => Ok(args
-                .iter()
-                .map(|arg| PyExpr::from(arg.clone()))
-                .collect()),
+            | Expr::WindowFunction(WindowFunction { args, .. }) => {
+                Ok(args.iter().map(|arg| PyExpr::from(arg.clone())).collect())
+            }
 
             // Expr(s) that require more specific processing
             Expr::Case(Case {
@@ -194,8 +192,7 @@ impl PyExpr {
                 Ok(operands)
             }
             Expr::InList { expr, list, .. } => {
-                let mut operands: Vec<PyExpr> =
-                    vec![PyExpr::from(*expr.clone())];
+                let mut operands: Vec<PyExpr> = vec![PyExpr::from(*expr.clone())];
                 for list_elem in list {
                     operands.push(PyExpr::from(list_elem.clone()));
                 }
@@ -241,7 +238,6 @@ impl PyExpr {
             ))),
         }
     }
-
 
     pub fn get_type(&self) -> PyResult<String> {
         Ok(String::from(match &self.expr {
@@ -370,7 +366,6 @@ impl PyExpr {
         }))
     }
 
-
     // pub fn operator_name(&self) -> PyResult<String> {
     //     Ok(match &self.expr {
     //         Expr::BinaryExpr(BinaryExpr {
@@ -423,7 +418,6 @@ impl PyExpr {
     //         }
     //     })
     // }
-    
 
     // Name of the variant as it would appear in the SQL
     fn variant_name(&self) -> PyResult<String> {
@@ -574,6 +568,7 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_class::<create_memory_table::PyCreateMemoryTable>()?;
     m.add_class::<create_view::PyCreateView>()?;
     m.add_class::<drop_table::PyDropTable>()?;
+    m.add_class::<repartition::PyRepartition>()?;
     // operators
     m.add_class::<table_scan::PyTableScan>()?;
     m.add_class::<projection::PyProjection>()?;

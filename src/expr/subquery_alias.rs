@@ -20,7 +20,7 @@ use std::fmt::{self, Display, Formatter};
 use datafusion_expr::SubqueryAlias;
 use pyo3::prelude::*;
 
-use crate::{sql::logical::PyLogicalPlan, common::df_schema::PyDFSchema};
+use crate::{common::df_schema::PyDFSchema, sql::logical::PyLogicalPlan};
 
 use super::logical_node::LogicalNode;
 
@@ -50,16 +50,13 @@ impl Display for PySubqueryAlias {
             \nInputs(s): {:?}
             \nAlias: {:?}
             \nSchema: {:?}",
-            self.subquery_alias.input,
-            self.subquery_alias.alias,
-            self.subquery_alias.schema,
+            self.subquery_alias.input, self.subquery_alias.alias, self.subquery_alias.schema,
         )
     }
 }
 
 #[pymethods]
 impl PySubqueryAlias {
-
     /// Retrieves the input `LogicalPlan` to this `Projection` node
     fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
         Ok(Self::inputs(self))
