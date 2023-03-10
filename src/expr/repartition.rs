@@ -17,12 +17,12 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use datafusion_expr::{logical_plan::Repartition, Partitioning};
+use datafusion_expr::{logical_plan::Repartition, Partitioning, Expr};
 use pyo3::prelude::*;
 
-use crate::sql::logical::PyLogicalPlan;
+use crate::{sql::logical::PyLogicalPlan, errors::py_type_err};
 
-use super::logical_node::LogicalNode;
+use super::{logical_node::LogicalNode, PyExpr};
 
 #[pyclass(name = "Repartition", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
@@ -82,6 +82,29 @@ impl PyRepartition {
         Ok(PyPartitioning {
             partitioning: self.repartition.partitioning_scheme.clone(),
         })
+    }
+
+    fn distribute_list(&self) -> PyResult<Vec<PyExpr>> {
+        match &self.repartition.partitioning_scheme {
+            Partitioning::DistributeBy(distribute_list) => Ok(distribute_list
+                .iter()
+                .map(|e| PyExpr::from(e.clone()))
+                .collect()),
+            _ => Err(py_type_err("unexpected repartition strategy")),
+        }
+    }
+
+    fn distribute_columns(&self) -> PyResult<String> {
+        match &self.repartition.partitioning_scheme {
+            Partitioning::DistributeBy(distribute_list) => Ok(distribute_list
+                .iter()
+                .map(|e| match &e {
+                    Expr::Column(column) => column.name.clone(),
+                    _ => panic!("Encountered a type other than Expr::Column"),
+                })
+                .collect()),
+            _ => Err(py_type_err("unexpected repartition strategy")),
+        }
     }
 
     fn __repr__(&self) -> PyResult<String> {
