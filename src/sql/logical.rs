@@ -31,6 +31,7 @@ use crate::expr::sort::PySort;
 use crate::expr::subquery::PySubquery;
 use crate::expr::subquery_alias::PySubqueryAlias;
 use crate::expr::table_scan::PyTableScan;
+use crate::expr::create_memory_table::PyCreateMemoryTable;
 use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
 
@@ -60,6 +61,7 @@ impl PyLogicalPlan {
         Python::with_gil(|_| match self.plan.as_ref() {
             LogicalPlan::Aggregate(plan) => PyAggregate::from(plan.clone()).to_variant(py),
             LogicalPlan::Analyze(plan) => PyAnalyze::from(plan.clone()).to_variant(py),
+            LogicalPlan::CreateMemoryTable(plan) => PyCreateMemoryTable::from(plan.clone()).to_variant(py),
             LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
             LogicalPlan::Extension(node) => PyExtension::from(node.clone()).to_variant(py),
