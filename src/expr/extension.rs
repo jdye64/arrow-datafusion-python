@@ -30,7 +30,7 @@ pub struct PyExtension {
 
 impl From<Extension> for PyExtension {
     fn from(node: Extension) -> PyExtension {
-        PyExtension { node: node }
+        PyExtension { node }
     }
 }
 

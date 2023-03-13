@@ -17,10 +17,10 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use datafusion_expr::{logical_plan::Repartition, Partitioning, Expr};
+use datafusion_expr::{logical_plan::Repartition, Expr, Partitioning};
 use pyo3::prelude::*;
 
-use crate::{sql::logical::PyLogicalPlan, errors::py_type_err};
+use crate::{errors::py_type_err, sql::logical::PyLogicalPlan};
 
 use super::{logical_node::LogicalNode, PyExpr};
 

@@ -49,6 +49,7 @@ use datafusion::physical_plan::SendableRecordBatchStream;
 use datafusion::prelude::{
     AvroReadOptions, CsvReadOptions, DataFrame, NdJsonReadOptions, ParquetReadOptions,
 };
+use datafusion_common::config::Extensions;
 use datafusion_common::ScalarValue;
 use pyo3::types::PyTuple;
 use tokio::runtime::Runtime;
@@ -276,23 +277,29 @@ impl PySessionContext {
     fn create_dataframe(
         &mut self,
         partitions: PyArrowType<Vec<Vec<RecordBatch>>>,
+        name: Option<&str>,
         py: Python,
     ) -> PyResult<PyDataFrame> {
         let schema = partitions.0[0][0].schema();
         let table = MemTable::try_new(schema, partitions.0).map_err(DataFusionError::from)?;
 
-        // generate a random (unique) name for this table
+        // generate a random (unique) name for this table if none is provided
         // table name cannot start with numeric digit
-        let name = "c".to_owned()
-            + Uuid::new_v4()
-                .simple()
-                .encode_lower(&mut Uuid::encode_buffer());
+        let table_name = match name {
+            Some(val) => val.to_owned(),
+            None => {
+                "c".to_owned()
+                    + Uuid::new_v4()
+                        .simple()
+                        .encode_lower(&mut Uuid::encode_buffer())
+            }
+        };
 
         self.ctx
-            .register_table(&*name, Arc::new(table))
+            .register_table(&*table_name, Arc::new(table))
             .map_err(DataFusionError::from)?;
 
-        let table = wait_for_future(py, self._table(&name)).map_err(DataFusionError::from)?;
+        let table = wait_for_future(py, self._table(&table_name)).map_err(DataFusionError::from)?;
 
         let df = PyDataFrame::new(table);
         Ok(df)
@@ -305,7 +312,12 @@ impl PySessionContext {
 
     /// Construct datafusion dataframe from Python list
     #[allow(clippy::wrong_self_convention)]
-    fn from_pylist(&mut self, data: PyObject, _py: Python) -> PyResult<PyDataFrame> {
+    fn from_pylist(
+        &mut self,
+        data: PyObject,
+        name: Option<&str>,
+        _py: Python,
+    ) -> PyResult<PyDataFrame> {
         Python::with_gil(|py| {
             // Instantiate pyarrow Table object & convert to Arrow Table
             let table_class = py.import("pyarrow")?.getattr("Table")?;
@@ -313,14 +325,19 @@ impl PySessionContext {
             let table = table_class.call_method1("from_pylist", args)?.into();
 
             // Convert Arrow Table to datafusion DataFrame
-            let df = self.from_arrow_table(table, py)?;
+            let df = self.from_arrow_table(table, name, py)?;
             Ok(df)
         })
     }
 
     /// Construct datafusion dataframe from Python dictionary
     #[allow(clippy::wrong_self_convention)]
-    fn from_pydict(&mut self, data: PyObject, _py: Python) -> PyResult<PyDataFrame> {
+    fn from_pydict(
+        &mut self,
+        data: PyObject,
+        name: Option<&str>,
+        _py: Python,
+    ) -> PyResult<PyDataFrame> {
         Python::with_gil(|py| {
             // Instantiate pyarrow Table object & convert to Arrow Table
             let table_class = py.import("pyarrow")?.getattr("Table")?;
@@ -328,14 +345,19 @@ impl PySessionContext {
             let table = table_class.call_method1("from_pydict", args)?.into();
 
             // Convert Arrow Table to datafusion DataFrame
-            let df = self.from_arrow_table(table, py)?;
+            let df = self.from_arrow_table(table, name, py)?;
             Ok(df)
         })
     }
 
     /// Construct datafusion dataframe from Arrow Table
     #[allow(clippy::wrong_self_convention)]
-    fn from_arrow_table(&mut self, data: PyObject, _py: Python) -> PyResult<PyDataFrame> {
+    fn from_arrow_table(
+        &mut self,
+        data: PyObject,
+        name: Option<&str>,
+        _py: Python,
+    ) -> PyResult<PyDataFrame> {
         Python::with_gil(|py| {
             // Instantiate pyarrow Table object & convert to batches
             let table = data.call_method0(py, "to_batches")?;
@@ -345,13 +367,18 @@ impl PySessionContext {
             // here we need to wrap the vector of record batches in an additional vector
             let batches = table.extract::<PyArrowType<Vec<RecordBatch>>>(py)?;
             let list_of_batches = PyArrowType::try_from(vec![batches.0])?;
-            self.create_dataframe(list_of_batches, py)
+            self.create_dataframe(list_of_batches, name, py)
         })
     }
 
     /// Construct datafusion dataframe from pandas
     #[allow(clippy::wrong_self_convention)]
-    fn from_pandas(&mut self, data: PyObject, _py: Python) -> PyResult<PyDataFrame> {
+    fn from_pandas(
+        &mut self,
+        data: PyObject,
+        name: Option<&str>,
+        _py: Python,
+    ) -> PyResult<PyDataFrame> {
         Python::with_gil(|py| {
             // Instantiate pyarrow Table object & convert to Arrow Table
             let table_class = py.import("pyarrow")?.getattr("Table")?;
@@ -359,20 +386,25 @@ impl PySessionContext {
             let table = table_class.call_method1("from_pandas", args)?.into();
 
             // Convert Arrow Table to datafusion DataFrame
-            let df = self.from_arrow_table(table, py)?;
+            let df = self.from_arrow_table(table, name, py)?;
             Ok(df)
         })
     }
 
     /// Construct datafusion dataframe from polars
     #[allow(clippy::wrong_self_convention)]
-    fn from_polars(&mut self, data: PyObject, _py: Python) -> PyResult<PyDataFrame> {
+    fn from_polars(
+        &mut self,
+        data: PyObject,
+        name: Option<&str>,
+        _py: Python,
+    ) -> PyResult<PyDataFrame> {
         Python::with_gil(|py| {
             // Convert Polars dataframe to Arrow Table
             let table = data.call_method0(py, "to_arrow")?;
 
             // Convert Arrow Table to datafusion DataFrame
-            let df = self.from_arrow_table(table, py)?;
+            let df = self.from_arrow_table(table, name, py)?;
             Ok(df)
         })
     }
@@ -667,19 +699,20 @@ impl PySessionContext {
         part: usize,
         py: Python,
     ) -> PyResult<PyRecordBatchStream> {
-        let ctx = Arc::new(TaskContext::new(
+        let ctx = TaskContext::try_new(
             "task_id".to_string(),
             "session_id".to_string(),
             HashMap::new(),
             HashMap::new(),
             HashMap::new(),
             Arc::new(RuntimeEnv::default()),
-        ));
+            Extensions::default(),
+        );
         // create a Tokio runtime to run the async code
         let rt = Runtime::new().unwrap();
         let plan = plan.plan.clone();
         let fut: JoinHandle<datafusion_common::Result<SendableRecordBatchStream>> =
-            rt.spawn(async move { plan.execute(part, ctx) });
+            rt.spawn(async move { plan.execute(part, Arc::new(ctx?)) });
         let stream = wait_for_future(py, fut).map_err(py_datafusion_err)?;
         Ok(PyRecordBatchStream::new(stream?))
     }

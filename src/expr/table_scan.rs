@@ -51,7 +51,10 @@ impl Display for PyTableScan {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "TableScan -> Table Name: `{}`, Projections: `{:?}`, Projected Schema: `{:?}`, Filters: `{:?}`",
+            "TableScan\nTable Name: {}
+            Projections: {:?}
+            Projected Schema: {:?}
+            Filters: {:?}",
             &self.table_scan.table_name,
             &self.projections(),
             &self.schema(),

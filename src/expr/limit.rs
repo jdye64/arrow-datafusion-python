@@ -46,9 +46,9 @@ impl Display for PyLimit {
         write!(
             f,
             "Limit
-            \nSkip: {}
-            \nFetch: {:?}
-            \nInput: {:?}",
+            Skip: {}
+            Fetch: {:?}
+            Input: {:?}",
             &self.limit.skip, &self.limit.fetch, &self.limit.input
         )
     }

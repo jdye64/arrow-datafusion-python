@@ -46,8 +46,8 @@ impl Display for PyUnion {
         write!(
             f,
             "Union
-            \nInputs: {:?}
-            \nSchema: {:?}",
+            Inputs: {:?}
+            Schema: {:?}",
             &self.union_.inputs, &self.union_.schema,
         )
     }

@@ -95,14 +95,14 @@ impl Display for PyJoin {
         write!(
             f,
             "Join
-            \nLeft: {:?}
-            \nRight: {:?}
-            \nOn: {:?}
-            \nFilter: {:?}
-            \nJoinType: {:?}
-            \nJoinConstraint: {:?}
-            \nSchema: {:?}
-            \nNullEqualsNull: {:?}",
+            Left: {:?}
+            Right: {:?}
+            On: {:?}
+            Filter: {:?}
+            JoinType: {:?}
+            JoinConstraint: {:?}
+            Schema: {:?}
+            NullEqualsNull: {:?}",
             &self.join.left,
             &self.join.right,
             &self.join.on,
