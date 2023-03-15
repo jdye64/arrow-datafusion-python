@@ -80,6 +80,10 @@ from datafusion.expr import (
     Between,
     Explain,
     Extension,
+    CreateMemoryTable,
+    CreateView,
+    Distinct,
+    DropTable,
 )
 
 
@@ -149,6 +153,10 @@ def test_class_module_is_datafusion():
         SubqueryAlias,
         Explain,
         Extension,
+        CreateMemoryTable,
+        CreateView,
+        Distinct,
+        DropTable,
     ]:
         assert klass.__module__ == "datafusion.expr"
 

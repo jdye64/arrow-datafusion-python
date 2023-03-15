@@ -84,6 +84,7 @@ from .expr import (
     Partitioning,
     Explain,
     SubqueryAlias,
+    Distinct,
 )
 
 __version__ = importlib_metadata.version(__name__)
@@ -143,6 +144,7 @@ __all__ = [
     "Partitioning",
     "Explain",
     "SubqueryAlias",
+    "Distinct",
 ]
 
 
