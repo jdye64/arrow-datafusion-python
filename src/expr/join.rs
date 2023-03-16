@@ -157,6 +157,11 @@ impl PyJoin {
         Ok(self.join.schema.as_ref().clone().into())
     }
 
+    /// Retrieves the input `LogicalPlan` to this `Projection` node
+    fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
+        Ok(Self::inputs(self))
+    }
+
     /// If null_equals_null is true, null == null else null != null
     fn null_equals_null(&self) -> PyResult<bool> {
         Ok(self.join.null_equals_null)
