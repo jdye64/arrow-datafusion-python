@@ -45,7 +45,7 @@ impl PyColumn {
 
     /// Get the column relation
     fn relation(&self) -> Option<String> {
-        self.col.relation.clone()
+        Some(self.col.relation.as_ref().unwrap().table().to_string())
     }
 
     /// Get the fully-qualified column name

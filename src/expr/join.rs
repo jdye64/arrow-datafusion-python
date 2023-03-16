@@ -41,10 +41,27 @@ impl From<PyJoinType> for JoinType {
     }
 }
 
-#[pymethods]
 impl PyJoinType {
     pub fn is_outer(&self) -> bool {
         self.join_type.is_outer()
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        self.__str__()
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(match &self.join_type {
+            JoinType::Inner => "Inner",
+            JoinType::Left => "Left",
+            JoinType::Right => "Right",
+            JoinType::Full => "Full",
+            JoinType::LeftSemi => "LeftSemi",
+            JoinType::RightSemi => "RightSemi",
+            JoinType::LeftAnti => "LeftAnti",
+            JoinType::RightAnti => "RightAnti",
+        }
+        .to_string())
     }
 }
 
@@ -157,7 +174,7 @@ impl PyJoin {
         Ok(self.join.schema.as_ref().clone().into())
     }
 
-    /// Retrieves the input `LogicalPlan` to this `Projection` node
+    /// Retrieves both the 'left' and 'right' input plans to the join
     fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
         Ok(Self::inputs(self))
     }
