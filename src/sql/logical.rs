@@ -20,6 +20,7 @@ use std::sync::Arc;
 use crate::errors::py_unsupported_variant_err;
 use crate::expr::aggregate::PyAggregate;
 use crate::expr::analyze::PyAnalyze;
+use crate::expr::distinct::PyDistinct;
 use crate::expr::empty_relation::PyEmptyRelation;
 use crate::expr::explain::PyExplain;
 use crate::expr::extension::PyExtension;
@@ -28,6 +29,7 @@ use crate::expr::limit::PyLimit;
 use crate::expr::projection::PyProjection;
 use crate::expr::sort::PySort;
 use crate::expr::table_scan::PyTableScan;
+use crate::expr::cross_join::PyCrossJoin;
 use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
 
@@ -67,6 +69,8 @@ impl PyLogicalPlan {
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
             LogicalPlan::Sort(plan) => PySort::from(plan.clone()).to_variant(py),
             LogicalPlan::TableScan(plan) => PyTableScan::from(plan.clone()).to_variant(py),
+            LogicalPlan::CrossJoin(plan) => PyCrossJoin::from(plan.clone()).to_variant(py),
+            LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             other => Err(py_unsupported_variant_err(format!(
                 "Cannot convert this plan to a LogicalNode: {:?}",
                 other

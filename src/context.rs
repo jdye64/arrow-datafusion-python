@@ -272,6 +272,14 @@ impl PySessionContext {
         Ok(())
     }
 
+
+    fn optimize(&mut self, plan: PyLogicalPlan, py: Python) -> PyResult<PyLogicalPlan> {
+        match self.ctx.optimize(&plan.plan) {
+            Ok(optimized_plan) => Ok(optimized_plan.into()),
+            Err(_e) => Ok(plan),
+        }
+    }
+
     /// Returns a PyDataFrame whose plan corresponds to the SQL statement.
     fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
         let result = self.ctx.sql(query);
