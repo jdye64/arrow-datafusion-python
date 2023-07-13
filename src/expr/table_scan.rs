@@ -15,10 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use datafusion_common::DFSchema;
+use datafusion_expr::LogicalPlan;
 use datafusion_expr::logical_plan::TableScan;
 use pyo3::prelude::*;
 use std::fmt::{self, Display, Formatter};
+use std::sync::Arc;
 
+use crate::errors::py_type_err;
 use crate::expr::logical_node::LogicalNode;
 use crate::sql::logical::PyLogicalPlan;
 use crate::{common::df_schema::PyDFSchema, expr::PyExpr};
@@ -134,5 +138,29 @@ impl LogicalNode for PyTableScan {
 
     fn to_variant(&self, py: Python) -> PyResult<PyObject> {
         Ok(self.clone().into_py(py))
+    }
+}
+
+
+impl TryFrom<LogicalPlan> for PyTableScan {
+    type Error = PyErr;
+
+    fn try_from(logical_plan: LogicalPlan) -> Result<Self, Self::Error> {
+        match logical_plan {
+            LogicalPlan::TableScan(table_scan) => {
+                // Create an input logical plan that's identical to the table scan with schema from the table source
+                let mut input = table_scan.clone();
+                input.projected_schema = DFSchema::try_from_qualified_schema(
+                    &table_scan.table_name,
+                    &table_scan.source.schema(),
+                )
+                .map_or(input.projected_schema, Arc::new);
+
+                Ok(PyTableScan {
+                    table_scan,
+                })
+            }
+            _ => Err(py_type_err("unexpected plan")),
+        }
     }
 }
