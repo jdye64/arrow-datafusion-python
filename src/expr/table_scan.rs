@@ -30,7 +30,7 @@ use crate::{common::df_schema::PyDFSchema, expr::PyExpr};
 #[pyclass(name = "TableScan", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyTableScan {
-    table_scan: TableScan,
+    pub table_scan: TableScan,
 }
 
 impl PyTableScan {
