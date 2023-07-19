@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use pyo3::{basic::CompareOp, prelude::*};
+use pyo3::{basic::CompareOp, prelude::*, types::PyList};
 use std::convert::{From, Into};
 
 use datafusion::arrow::datatypes::DataType;
@@ -335,7 +335,18 @@ impl PyExpr {
                 ScalarValue::TimestampNanosecond(v, _) => v.into_py(py),
                 ScalarValue::IntervalYearMonth(v) => v.into_py(py),
                 ScalarValue::IntervalDayTime(v) => v.into_py(py),
-                ScalarValue::IntervalMonthDayNano(v) => v.into_py(py),
+                ScalarValue::IntervalMonthDayNano(v) => {
+                    match v {
+                        Some(iv) => {
+                            let interval = *iv as u128;
+                            let months = (interval >> 32) as i32;
+                            let days = (interval >> 64) as i32;
+                            let ns = interval as i64;
+                            PyList::new(py, vec![i64::from(months), i64::from(days), ns]).into()
+                        },
+                        None => v.into_py(py)
+                    }
+                },
                 ScalarValue::Struct(_, _) => todo!(),
                 ScalarValue::Dictionary(_, _) => todo!(),
             }),
