@@ -415,7 +415,7 @@ impl DataTypeMap {
             SqlType::INTERVAL_MINUTE_SECOND => Err(py_datafusion_err(
                 DataFusionError::NotImplemented(format!("{:?}", sql_type)),
             )),
-            SqlType::INTERVAL_MONTH => Err(py_datafusion_err(DataFusionError::NotImplemented(
+            SqlType::INTERVAL_MONTH_DAY_NANOSECOND => Err(py_datafusion_err(DataFusionError::NotImplemented(
                 format!("{:?}", sql_type),
             ))),
             SqlType::INTERVAL_SECOND => Err(py_datafusion_err(DataFusionError::NotImplemented(
