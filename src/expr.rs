@@ -249,6 +249,20 @@ impl PyExpr {
         expr.into()
     }
 
+    /// Returns the escape char for like/ilike/similar to expr variants
+    #[pyo3(name = "getEscapeChar")]
+    pub fn get_escape_char(&self) -> PyResult<Option<char>> {
+        match &self.expr {
+            Expr::Like(Like { escape_char, .. })
+            | Expr::ILike(Like { escape_char, .. })
+            | Expr::SimilarTo(Like { escape_char, .. }) => Ok(*escape_char),
+            _ => Err(py_type_err(format!(
+                "Provided Expr {:?} not one of Like/ILike/SimilarTo",
+                &self.expr
+            ))),
+        }
+    }
+
     /// A Rex (Row Expression) specifies a single row of data. That specification
     /// could include user defined functions or types. RexType identifies the row
     /// as one of the possible valid `RexTypes`.
