@@ -163,7 +163,7 @@ impl DataTypeMap {
                 PythonType::Datetime,
                 match interval_unit {
                     IntervalUnit::DayTime => SqlType::INTERVAL_DAY,
-                    IntervalUnit::MonthDayNano => SqlType::INTERVAL_MONTH,
+                    IntervalUnit::MonthDayNano => SqlType::INTERVAL_MONTH_DAY_NANOSECOND,
                     IntervalUnit::YearMonth => SqlType::INTERVAL_YEAR_MONTH,
                 },
             )),
