@@ -20,7 +20,7 @@ use pyo3::{prelude::*, wrap_pyfunction};
 use datafusion_common::Column;
 use datafusion_expr::{
     aggregate_function,
-    expr::{AggregateFunction, ScalarFunction, Sort, WindowFunction},
+    expr::{AggregateFunction, ScalarFunction, Sort, WindowFunction, Alias},
     lit,
     window_function::find_df_window_func,
     BuiltinScalarFunction, Expr, WindowFrame,
@@ -84,6 +84,7 @@ fn order_by(expr: PyExpr, asc: Option<bool>, nulls_first: Option<bool>) -> PyRes
 /// Creates a new Alias Expr
 #[pyfunction]
 fn alias(expr: PyExpr, name: &str) -> PyResult<PyExpr> {
+    let a = Expr::Alias(Alias)
     Ok(PyExpr {
         expr: datafusion_expr::Expr::Alias(Box::new(expr.expr), String::from(name)),
     })

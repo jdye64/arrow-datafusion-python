@@ -35,7 +35,7 @@ use datafusion::execution::context::TaskContext;
 use datafusion::physical_expr::PhysicalSortExpr;
 use datafusion::physical_plan::stream::RecordBatchStreamAdapter;
 use datafusion::physical_plan::{
-    DisplayFormatType, ExecutionPlan, Partitioning, SendableRecordBatchStream, Statistics,
+    DisplayFormatType, ExecutionPlan, Partitioning, SendableRecordBatchStream, Statistics, Distribution, DisplayAs,
 };
 use datafusion_expr::Expr;
 use datafusion_optimizer::utils::conjunction;
@@ -143,6 +143,42 @@ impl DatasetExec {
     }
 }
 
+impl DisplayAs for DatasetExec {
+
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        Python::with_gil(|py| {
+            let number_of_fragments = self.fragments.as_ref(py).len();
+            match t {
+                DisplayFormatType::Default | DisplayFormatType::Verbose => {
+                    let projected_columns: Vec<String> = self
+                        .schema
+                        .fields()
+                        .iter()
+                        .map(|x| x.name().to_owned())
+                        .collect();
+                    if let Some(filter_expr) = &self.filter_expr {
+                        let filter_expr = filter_expr.as_ref(py).str().or(Err(std::fmt::Error))?;
+                        write!(
+                            f,
+                            "DatasetExec: number_of_fragments={}, filter_expr={}, projection=[{}]",
+                            number_of_fragments,
+                            filter_expr,
+                            projected_columns.join(", "),
+                        )
+                    } else {
+                        write!(
+                            f,
+                            "DatasetExec: number_of_fragments={}, projection=[{}]",
+                            number_of_fragments,
+                            projected_columns.join(", "),
+                        )
+                    }
+                }
+            }
+        })
+    }
+}
+
 impl ExecutionPlan for DatasetExec {
     /// Return a reference to Any that can be used for downcasting
     fn as_any(&self) -> &dyn Any {
@@ -235,40 +271,44 @@ impl ExecutionPlan for DatasetExec {
         })
     }
 
-    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        Python::with_gil(|py| {
-            let number_of_fragments = self.fragments.as_ref(py).len();
-            match t {
-                DisplayFormatType::Default | DisplayFormatType::Verbose => {
-                    let projected_columns: Vec<String> = self
-                        .schema
-                        .fields()
-                        .iter()
-                        .map(|x| x.name().to_owned())
-                        .collect();
-                    if let Some(filter_expr) = &self.filter_expr {
-                        let filter_expr = filter_expr.as_ref(py).str().or(Err(std::fmt::Error))?;
-                        write!(
-                            f,
-                            "DatasetExec: number_of_fragments={}, filter_expr={}, projection=[{}]",
-                            number_of_fragments,
-                            filter_expr,
-                            projected_columns.join(", "),
-                        )
-                    } else {
-                        write!(
-                            f,
-                            "DatasetExec: number_of_fragments={}, projection=[{}]",
-                            number_of_fragments,
-                            projected_columns.join(", "),
-                        )
-                    }
-                }
-            }
-        })
-    }
-
     fn statistics(&self) -> Statistics {
         self.projected_statistics.clone()
+    }
+
+    fn unbounded_output(&self, _children: &[bool]) -> DFResult<bool> {
+        Ok(false)
+    }
+
+    fn required_input_distribution(&self) -> Vec<datafusion::physical_plan::Distribution> {
+        vec![Distribution::UnspecifiedDistribution; self.children().len()]
+    }
+
+    fn required_input_ordering(&self) -> Vec<Option<Vec<datafusion::physical_expr::PhysicalSortRequirement>>> {
+        vec![None; self.children().len()]
+    }
+
+    fn maintains_input_order(&self) -> Vec<bool> {
+        vec![false; self.children().len()]
+    }
+
+    fn benefits_from_input_partitioning(&self) -> bool {
+        // By default try to maximize parallelism with more CPUs if
+        // possible
+        !self
+            .required_input_distribution()
+            .into_iter()
+            .any(|dist| matches!(dist, Distribution::SinglePartition))
+    }
+
+    fn equivalence_properties(&self) -> datafusion::physical_expr::EquivalenceProperties {
+        datafusion::physical_expr::EquivalenceProperties::new(self.schema())
+    }
+
+    fn ordering_equivalence_properties(&self) -> datafusion::physical_expr::OrderingEquivalenceProperties {
+        datafusion::physical_expr::OrderingEquivalenceProperties::new(self.schema())
+    }
+
+    fn metrics(&self) -> Option<datafusion::physical_plan::metrics::MetricsSet> {
+        None
     }
 }
