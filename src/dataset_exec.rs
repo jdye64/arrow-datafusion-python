@@ -35,7 +35,8 @@ use datafusion::execution::context::TaskContext;
 use datafusion::physical_expr::PhysicalSortExpr;
 use datafusion::physical_plan::stream::RecordBatchStreamAdapter;
 use datafusion::physical_plan::{
-    DisplayFormatType, ExecutionPlan, Partitioning, SendableRecordBatchStream, Statistics, Distribution, DisplayAs,
+    DisplayAs, DisplayFormatType, Distribution, ExecutionPlan, Partitioning,
+    SendableRecordBatchStream, Statistics,
 };
 use datafusion_expr::Expr;
 use datafusion_optimizer::utils::conjunction;
@@ -144,7 +145,6 @@ impl DatasetExec {
 }
 
 impl DisplayAs for DatasetExec {
-
     fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         Python::with_gil(|py| {
             let number_of_fragments = self.fragments.as_ref(py).len();
@@ -283,7 +283,9 @@ impl ExecutionPlan for DatasetExec {
         vec![Distribution::UnspecifiedDistribution; self.children().len()]
     }
 
-    fn required_input_ordering(&self) -> Vec<Option<Vec<datafusion::physical_expr::PhysicalSortRequirement>>> {
+    fn required_input_ordering(
+        &self,
+    ) -> Vec<Option<Vec<datafusion::physical_expr::PhysicalSortRequirement>>> {
         vec![None; self.children().len()]
     }
 
@@ -304,7 +306,9 @@ impl ExecutionPlan for DatasetExec {
         datafusion::physical_expr::EquivalenceProperties::new(self.schema())
     }
 
-    fn ordering_equivalence_properties(&self) -> datafusion::physical_expr::OrderingEquivalenceProperties {
+    fn ordering_equivalence_properties(
+        &self,
+    ) -> datafusion::physical_expr::OrderingEquivalenceProperties {
         datafusion::physical_expr::OrderingEquivalenceProperties::new(self.schema())
     }
 

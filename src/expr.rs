@@ -115,7 +115,7 @@ impl PyExpr {
     /// Return the specific expression
     fn to_variant(&self, py: Python) -> PyResult<PyObject> {
         Python::with_gil(|_| match &self.expr {
-            Expr::Alias(alias, name) => Ok(PyAlias::new(alias, name).into_py(py)),
+            Expr::Alias(alias) => Ok(PyAlias::new(&alias.expr, &alias.name).into_py(py)),
             Expr::Column(col) => Ok(PyColumn::from(col.clone()).into_py(py)),
             Expr::ScalarVariable(data_type, variables) => {
                 Ok(PyScalarVariable::new(data_type, variables).into_py(py))
@@ -253,9 +253,9 @@ impl PyExpr {
     #[pyo3(name = "getEscapeChar")]
     pub fn get_escape_char(&self) -> PyResult<Option<char>> {
         match &self.expr {
-            Expr::Like(Like { escape_char, .. })
-            | Expr::ILike(Like { escape_char, .. })
-            | Expr::SimilarTo(Like { escape_char, .. }) => Ok(*escape_char),
+            Expr::Like(Like { escape_char, .. }) | Expr::SimilarTo(Like { escape_char, .. }) => {
+                Ok(*escape_char)
+            }
             _ => Err(py_type_err(format!(
                 "Provided Expr {:?} not one of Like/ILike/SimilarTo",
                 &self.expr
@@ -279,7 +279,6 @@ impl PyExpr {
             | Expr::Negative(..)
             | Expr::IsNull(..)
             | Expr::Like { .. }
-            | Expr::ILike { .. }
             | Expr::SimilarTo { .. }
             | Expr::Between { .. }
             | Expr::Case { .. }
@@ -320,6 +319,7 @@ impl PyExpr {
             Expr::Literal(scalar_value) => Ok(match scalar_value {
                 ScalarValue::Null => todo!(),
                 ScalarValue::Boolean(v) => v.into_py(py),
+                ScalarValue::Fixedsizelist(_, _, _) => todo!(),
                 ScalarValue::Float32(v) => v.into_py(py),
                 ScalarValue::Float64(v) => v.into_py(py),
                 ScalarValue::Decimal128(v, _, _) => v.into_py(py),
@@ -339,6 +339,10 @@ impl PyExpr {
                 ScalarValue::List(_, _) => todo!(),
                 ScalarValue::Date32(v) => v.into_py(py),
                 ScalarValue::Date64(v) => v.into_py(py),
+                ScalarValue::DurationSecond(v) => v.into_py(py),
+                ScalarValue::DurationMillisecond(v) => v.into_py(py),
+                ScalarValue::DurationMicrosecond(v) => v.into_py(py),
+                ScalarValue::DurationNanosecond(v) => v.into_py(py),
                 ScalarValue::Time32Second(v) => v.into_py(py),
                 ScalarValue::Time32Millisecond(v) => v.into_py(py),
                 ScalarValue::Time64Microsecond(v) => v.into_py(py),
@@ -349,17 +353,15 @@ impl PyExpr {
                 ScalarValue::TimestampNanosecond(v, _) => v.into_py(py),
                 ScalarValue::IntervalYearMonth(v) => v.into_py(py),
                 ScalarValue::IntervalDayTime(v) => v.into_py(py),
-                ScalarValue::IntervalMonthDayNano(v) => {
-                    match v {
-                        Some(iv) => {
-                            let interval = *iv as u128;
-                            let months = (interval >> 32) as i32;
-                            let days = (interval >> 64) as i32;
-                            let ns = interval as i64;
-                            PyList::new(py, vec![i64::from(months), i64::from(days), ns]).into()
-                        },
-                        None => v.into_py(py)
+                ScalarValue::IntervalMonthDayNano(v) => match v {
+                    Some(iv) => {
+                        let interval = *iv as u128;
+                        let months = (interval >> 32) as i32;
+                        let days = (interval >> 64) as i32;
+                        let ns = interval as i64;
+                        PyList::new(py, vec![i64::from(months), i64::from(days), ns]).into()
                     }
+                    None => v.into_py(py),
                 },
                 ScalarValue::Struct(_, _) => todo!(),
                 ScalarValue::Dictionary(_, _) => todo!(),
@@ -382,8 +384,8 @@ impl PyExpr {
             }
 
             // Expr(s) that house the Expr instance to return in their bounded params
-            Expr::Alias(expr, ..)
-            | Expr::Not(expr)
+            Expr::Alias(alias, ..) => Ok(vec![PyExpr::from(*alias.expr.clone())]),
+            Expr::Not(expr)
             | Expr::IsNull(expr)
             | Expr::IsNotNull(expr)
             | Expr::IsTrue(expr)
@@ -454,10 +456,6 @@ impl PyExpr {
                 PyExpr::from(*expr.clone()),
                 PyExpr::from(*pattern.clone()),
             ]),
-            Expr::ILike(Like { expr, pattern, .. }) => Ok(vec![
-                PyExpr::from(*expr.clone()),
-                PyExpr::from(*pattern.clone()),
-            ]),
             Expr::SimilarTo(Like { expr, pattern, .. }) => Ok(vec![
                 PyExpr::from(*expr.clone()),
                 PyExpr::from(*pattern.clone()),
@@ -516,13 +514,6 @@ impl PyExpr {
                     "not like".to_string()
                 } else {
                     "like".to_string()
-                }
-            }
-            Expr::ILike(Like { negated, .. }) => {
-                if *negated {
-                    "not ilike".to_string()
-                } else {
-                    "ilike".to_string()
                 }
             }
             Expr::SimilarTo(Like { negated, .. }) => {

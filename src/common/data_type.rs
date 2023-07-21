@@ -17,7 +17,7 @@
 
 use datafusion::arrow::datatypes::{DataType, IntervalUnit, TimeUnit};
 use datafusion_common::{DataFusionError, ScalarValue};
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyValueError, prelude::*};
 
 use crate::errors::py_datafusion_err;
 
@@ -239,6 +239,7 @@ impl DataTypeMap {
             ScalarValue::Boolean(_) => Ok(DataType::Boolean),
             ScalarValue::Float32(_) => Ok(DataType::Float32),
             ScalarValue::Float64(_) => Ok(DataType::Float64),
+            ScalarValue::Fixedsizelist(_, _, _) => todo!(),
             ScalarValue::Decimal128(_, precision, scale) => {
                 Ok(DataType::Decimal128(*precision, *scale))
             }
@@ -263,6 +264,10 @@ impl DataTypeMap {
             ScalarValue::LargeBinary(_) => Ok(DataType::LargeBinary),
             ScalarValue::Date32(_) => Ok(DataType::Date32),
             ScalarValue::Date64(_) => Ok(DataType::Date64),
+            ScalarValue::DurationSecond(_) => Ok(DataType::Duration(TimeUnit::Second)),
+            ScalarValue::DurationMillisecond(_) => Ok(DataType::Duration(TimeUnit::Millisecond)),
+            ScalarValue::DurationMicrosecond(_) => Ok(DataType::Duration(TimeUnit::Microsecond)),
+            ScalarValue::DurationNanosecond(_) => Ok(DataType::Duration(TimeUnit::Nanosecond)),
             ScalarValue::Time32Second(_) => Ok(DataType::Time32(TimeUnit::Second)),
             ScalarValue::Time32Millisecond(_) => Ok(DataType::Time32(TimeUnit::Millisecond)),
             ScalarValue::Time64Microsecond(_) => Ok(DataType::Time64(TimeUnit::Microsecond)),
@@ -304,9 +309,40 @@ impl DataTypeMap {
     }
 
     #[staticmethod]
+    #[pyo3(name = "from_parquet_type_str")]
+    /// When using pyarrow.parquet.read_metadata().schema.column(x).physical_type you are presented
+    /// with a String type for schema rather than an object type. Here we make a best effort
+    /// to convert that to a physical type.
+    pub fn py_map_from_parquet_type_str(parquet_str_type: String) -> PyResult<DataTypeMap> {
+        let arrow_dtype = match parquet_str_type.to_lowercase().as_str() {
+            "boolean" => Ok(DataType::Boolean),
+            "int32" => Ok(DataType::Int32),
+            "int64" => Ok(DataType::Int64),
+            "int96" => {
+                // Int96 is an old datatype that is now deprecated. We convert to nanosecond timestamp
+                Ok(DataType::Timestamp(TimeUnit::Nanosecond, None))
+            }
+            "float" => Ok(DataType::Float32),
+            "double" => Ok(DataType::Float64),
+            _ => Err(PyValueError::new_err(format!(
+                "Unable to determine Arrow Data Type from Parquet String type: {:?}",
+                parquet_str_type
+            ))),
+        };
+        DataTypeMap::map_from_arrow_type(&arrow_dtype?)
+    }
+
+    #[staticmethod]
     #[pyo3(name = "arrow")]
     pub fn py_map_from_arrow_type(arrow_type: &PyDataType) -> PyResult<DataTypeMap> {
         DataTypeMap::map_from_arrow_type(&arrow_type.data_type)
+    }
+
+    #[staticmethod]
+    #[pyo3(name = "arrow_str")]
+    pub fn py_map_from_arrow_type_str(arrow_type_str: String) -> PyResult<DataTypeMap> {
+        let data_type = PyDataType::py_map_from_arrow_type_str(arrow_type_str);
+        DataTypeMap::map_from_arrow_type(&data_type?.data_type)
     }
 
     #[staticmethod]
@@ -415,9 +451,9 @@ impl DataTypeMap {
             SqlType::INTERVAL_MINUTE_SECOND => Err(py_datafusion_err(
                 DataFusionError::NotImplemented(format!("{:?}", sql_type)),
             )),
-            SqlType::INTERVAL_MONTH_DAY_NANOSECOND => Err(py_datafusion_err(DataFusionError::NotImplemented(
-                format!("{:?}", sql_type),
-            ))),
+            SqlType::INTERVAL_MONTH_DAY_NANOSECOND => Err(py_datafusion_err(
+                DataFusionError::NotImplemented(format!("{:?}", sql_type)),
+            )),
             SqlType::INTERVAL_SECOND => Err(py_datafusion_err(DataFusionError::NotImplemented(
                 format!("{:?}", sql_type),
             ))),
@@ -556,6 +592,29 @@ impl DataTypeMap {
 #[pyclass(name = "DataType", module = "datafusion.common")]
 pub struct PyDataType {
     pub data_type: DataType,
+}
+
+impl PyDataType {
+    /// There are situations when obtaining dtypes on the Python side where the Arrow type
+    /// is presented as a String rather than an actual DataType. This function is used to
+    /// convert that String to a DataType for the Python side to use.
+    pub fn py_map_from_arrow_type_str(arrow_str_type: String) -> PyResult<PyDataType> {
+        let arrow_dtype = match arrow_str_type.to_lowercase().as_str() {
+            "boolean" => Ok(DataType::Boolean),
+            "int32" => Ok(DataType::Int32),
+            "int64" => Ok(DataType::Int64),
+            "float" => Ok(DataType::Float32),
+            "double" => Ok(DataType::Float64),
+            "float64" => Ok(DataType::Float64),
+            _ => Err(PyValueError::new_err(format!(
+                "Unable to determine Arrow Data Type from Arrow String type: {:?}",
+                arrow_str_type
+            ))),
+        };
+        Ok(PyDataType {
+            data_type: arrow_dtype?,
+        })
+    }
 }
 
 impl From<PyDataType> for DataType {

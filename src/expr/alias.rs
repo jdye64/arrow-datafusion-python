@@ -19,13 +19,28 @@ use crate::expr::PyExpr;
 use pyo3::prelude::*;
 use std::fmt::{self, Display, Formatter};
 
-use datafusion_expr::Expr;
+use datafusion_expr::{expr::Alias, Expr};
 
 #[pyclass(name = "Alias", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyAlias {
     expr: PyExpr,
     alias_name: String,
+}
+
+impl From<Alias> for PyAlias {
+    fn from(alias: Alias) -> PyAlias {
+        PyAlias {
+            expr: PyExpr::from(*alias.expr),
+            alias_name: alias.name,
+        }
+    }
+}
+
+impl From<PyAlias> for Alias {
+    fn from(alias: PyAlias) -> Self {
+        datafusion_expr::expr::Alias::new(alias.expr.into(), alias.alias_name)
+    }
 }
 
 impl Display for PyAlias {

@@ -16,8 +16,9 @@
 // under the License.
 
 use datafusion_common::DFSchema;
-use datafusion_expr::LogicalPlan;
+use datafusion_common::TableReference;
 use datafusion_expr::logical_plan::TableScan;
+use datafusion_expr::LogicalPlan;
 use pyo3::prelude::*;
 use std::fmt::{self, Display, Formatter};
 use std::sync::Arc;
@@ -75,12 +76,25 @@ impl PyTableScan {
         Ok(format!("{}", self.table_scan.table_name))
     }
 
-    /// TODO: Bindings for `TableSource` need to exist first. Left as a
-    /// placeholder to display intention to add when able to.
-    // #[pyo3(name = "source")]
-    // fn py_source(&self) -> PyResult<Arc<dyn TableSource>> {
-    //     Ok(self.table_scan.source)
-    // }
+    #[pyo3(name = "fqn")]
+    fn fqn(&self) -> PyResult<(Option<String>, Option<String>, String)> {
+        let table_ref: TableReference = self.table_scan.table_name.clone();
+        Ok(match table_ref {
+            TableReference::Bare { table } => (None, None, table.to_string()),
+            TableReference::Partial { schema, table } => {
+                (None, Some(schema.to_string()), table.to_string())
+            }
+            TableReference::Full {
+                catalog,
+                schema,
+                table,
+            } => (
+                Some(catalog.to_string()),
+                Some(schema.to_string()),
+                table.to_string(),
+            ),
+        })
+    }
 
     /// The column indexes that should be. Note if this is empty then
     /// all columns should be read by the `TableProvider`. This function
@@ -141,7 +155,6 @@ impl LogicalNode for PyTableScan {
     }
 }
 
-
 impl TryFrom<LogicalPlan> for PyTableScan {
     type Error = PyErr;
 
@@ -156,9 +169,7 @@ impl TryFrom<LogicalPlan> for PyTableScan {
                 )
                 .map_or(input.projected_schema, Arc::new);
 
-                Ok(PyTableScan {
-                    table_scan,
-                })
+                Ok(PyTableScan { table_scan })
             }
             _ => Err(py_type_err("unexpected plan")),
         }
