@@ -599,6 +599,12 @@ impl PyDataType {
     /// is presented as a String rather than an actual DataType. This function is used to
     /// convert that String to a DataType for the Python side to use.
     pub fn py_map_from_arrow_type_str(arrow_str_type: String) -> PyResult<PyDataType> {
+        // Certain string types contain "metadata" that should be trimmed here. Ex: "datetime64[ns, Europe/Berlin]"
+        let arrow_str_type = match arrow_str_type.find('[') {
+            Some(index) => arrow_str_type[0..index].to_string(),
+            None => arrow_str_type, // Return early if ',' is not found.
+        };
+
         let arrow_dtype = match arrow_str_type.to_lowercase().as_str() {
             "boolean" => Ok(DataType::Boolean),
             "int32" => Ok(DataType::Int32),
@@ -606,6 +612,7 @@ impl PyDataType {
             "float" => Ok(DataType::Float32),
             "double" => Ok(DataType::Float64),
             "float64" => Ok(DataType::Float64),
+            "datetime64" => Ok(DataType::Date64),
             _ => Err(PyValueError::new_err(format!(
                 "Unable to determine Arrow Data Type from Arrow String type: {:?}",
                 arrow_str_type
