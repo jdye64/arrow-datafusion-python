@@ -607,12 +607,19 @@ impl PyDataType {
 
         let arrow_dtype = match arrow_str_type.to_lowercase().as_str() {
             "boolean" => Ok(DataType::Boolean),
+            "int8" => Ok(DataType::Int8),
+            "int16" => Ok(DataType::Int16),
             "int32" => Ok(DataType::Int32),
             "int64" => Ok(DataType::Int64),
+            "uint8" => Ok(DataType::UInt8),
+            "uint16" => Ok(DataType::UInt16),
+            "uint32" => Ok(DataType::UInt32),
+            "uint64" => Ok(DataType::UInt64),
             "float" => Ok(DataType::Float32),
             "double" => Ok(DataType::Float64),
             "float64" => Ok(DataType::Float64),
             "datetime64" => Ok(DataType::Date64),
+            "object" => Ok(DataType::Utf8),
             _ => Err(PyValueError::new_err(format!(
                 "Unable to determine Arrow Data Type from Arrow String type: {:?}",
                 arrow_str_type
