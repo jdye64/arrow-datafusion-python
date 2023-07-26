@@ -603,6 +603,12 @@ impl PyDataType {
     pub fn py_map_from_arrow_type_str(arrow_str_type: String) -> PyResult<PyDataType> {
         let arrow_dtype = match arrow_str_type.to_lowercase().as_str() {
             "boolean" => Ok(DataType::Boolean),
+            "uint8" => Ok(DataType::UInt8),
+            "uint16" => Ok(DataType::UInt16),
+            "uint32" => Ok(DataType::UInt32),
+            "uint64" => Ok(DataType::UInt64),
+            "int8" => Ok(DataType::Int8),
+            "int16" => Ok(DataType::Int16),
             "int32" => Ok(DataType::Int32),
             "int64" => Ok(DataType::Int64),
             "float" => Ok(DataType::Float32),
