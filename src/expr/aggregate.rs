@@ -87,6 +87,16 @@ impl PyAggregate {
             .collect())
     }
 
+    /// Returns the inner Aggregate Expr(s)
+    pub fn agg_expressions(&self) -> PyResult<Vec<PyExpr>> {
+        Ok(self
+            .aggregate
+            .aggr_expr
+            .iter()
+            .map(|e| PyExpr::from(e.clone()))
+            .collect())
+    }
+
     pub fn agg_func_name(&self, expr: PyExpr) -> PyResult<String> {
         Self::_agg_func_name(&expr.expr)
     }
