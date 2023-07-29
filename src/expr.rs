@@ -537,6 +537,10 @@ impl PyExpr {
                 // appear in projections) so we just delegate to the contained expression instead
                 Self::expr_to_field(expr, input_plan)
             }
+            Expr::Wildcard => {
+                // Since * could be any of the valid column names just return the first one
+                Ok(input_plan.schema().field(0).clone())
+            }
             _ => {
                 let fields =
                     exprlist_to_fields(&[expr.clone()], input_plan).map_err(PyErr::from)?;
