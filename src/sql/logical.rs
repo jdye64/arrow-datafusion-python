@@ -25,6 +25,7 @@ use crate::expr::empty_relation::PyEmptyRelation;
 use crate::expr::explain::PyExplain;
 use crate::expr::extension::PyExtension;
 use crate::expr::filter::PyFilter;
+use crate::expr::join::PyJoin;
 use crate::expr::limit::PyLimit;
 use crate::expr::projection::PyProjection;
 use crate::expr::sort::PySort;
