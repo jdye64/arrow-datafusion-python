@@ -608,6 +608,7 @@ impl PyDataType {
         };
 
         let arrow_dtype = match arrow_str_type.to_lowercase().as_str() {
+            "bool" => Ok(DataType::Boolean),
             "boolean" => Ok(DataType::Boolean),
             "uint8" => Ok(DataType::UInt8),
             "uint16" => Ok(DataType::UInt16),
