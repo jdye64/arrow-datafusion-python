@@ -25,6 +25,7 @@ use crate::expr::empty_relation::PyEmptyRelation;
 use crate::expr::explain::PyExplain;
 use crate::expr::extension::PyExtension;
 use crate::expr::filter::PyFilter;
+use crate::expr::join::PyJoin;
 use crate::expr::limit::PyLimit;
 use crate::expr::projection::PyProjection;
 use crate::expr::sort::PySort;
@@ -62,11 +63,12 @@ impl PyLogicalPlan {
         Python::with_gil(|_| match self.plan.as_ref() {
             LogicalPlan::Aggregate(plan) => PyAggregate::from(plan.clone()).to_variant(py),
             LogicalPlan::Analyze(plan) => PyAnalyze::from(plan.clone()).to_variant(py),
+            LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             LogicalPlan::EmptyRelation(plan) => PyEmptyRelation::from(plan.clone()).to_variant(py),
             LogicalPlan::Explain(plan) => PyExplain::from(plan.clone()).to_variant(py),
             LogicalPlan::Extension(plan) => PyExtension::from(plan.clone()).to_variant(py),
-            LogicalPlan::Distinct(plan) => PyDistinct::from(plan.clone()).to_variant(py),
             LogicalPlan::Filter(plan) => PyFilter::from(plan.clone()).to_variant(py),
+            LogicalPlan::Join(plan) => PyJoin::from(plan.clone()).to_variant(py),
             LogicalPlan::Limit(plan) => PyLimit::from(plan.clone()).to_variant(py),
             LogicalPlan::Projection(plan) => PyProjection::from(plan.clone()).to_variant(py),
             LogicalPlan::Sort(plan) => PySort::from(plan.clone()).to_variant(py),
