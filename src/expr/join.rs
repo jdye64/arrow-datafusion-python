@@ -79,6 +79,17 @@ impl From<PyJoinConstraint> for JoinConstraint {
     }
 }
 
+#[pymethods]
+impl PyJoinConstraint {
+
+    fn __repr__(&self) -> PyResult<String> {
+        match self.join_constraint {
+            JoinConstraint::On => Ok("On".to_string()),
+            JoinConstraint::Using => Ok("Using".to_string())
+        }
+    }
+}
+
 #[pyclass(name = "Join", module = "datafusion.expr", subclass)]
 #[derive(Clone)]
 pub struct PyJoin {
