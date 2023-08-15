@@ -46,6 +46,13 @@ impl PyJoinType {
     pub fn is_outer(&self) -> bool {
         self.join_type.is_outer()
     }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!(
+            "{}",
+            self.join_type
+        ))
+    }
 }
 
 impl Display for PyJoinType {
