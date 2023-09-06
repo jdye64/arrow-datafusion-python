@@ -620,6 +620,8 @@ impl PyDataType {
             "int64" => Ok(DataType::Int64),
             "float" => Ok(DataType::Float32),
             "double" => Ok(DataType::Float64),
+            "float16" => Ok(DataType::Float16),
+            "float32" => Ok(DataType::Float32),
             "float64" => Ok(DataType::Float64),
             "datetime64" => Ok(DataType::Date64),
             "object" => Ok(DataType::Utf8),
