@@ -90,6 +90,7 @@ pub mod subquery;
 pub mod subquery_alias;
 pub mod table_scan;
 pub mod union;
+pub mod window;
 
 /// A PyExpr that can be used on a DataFrame
 #[pyclass(name = "Expr", module = "datafusion.expr", subclass)]
@@ -108,6 +109,14 @@ impl From<Expr> for PyExpr {
     fn from(expr: Expr) -> PyExpr {
         PyExpr { expr }
     }
+}
+
+/// Convert a list of DataFusion Expr to PyExpr
+pub fn py_expr_list(expr: &[Expr]) -> PyResult<Vec<PyExpr>> {
+    Ok(expr
+        .iter()
+        .map(|e| PyExpr::from(e.clone()))
+        .collect())
 }
 
 #[pymethods]
