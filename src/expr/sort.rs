@@ -72,6 +72,10 @@ impl PySort {
             .collect())
     }
 
+    fn get_fetch_val(&self) -> PyResult<Option<usize>> {
+        Ok(self.sort.fetch)
+    }
+
     /// Retrieves the input `LogicalPlan` to this `Sort` node
     fn input(&self) -> PyResult<Vec<PyLogicalPlan>> {
         Ok(Self::inputs(self))
@@ -81,6 +85,8 @@ impl PySort {
     fn schema(&self) -> PyDFSchema {
         self.sort.input.schema().as_ref().clone().into()
     }
+
+
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("Sort({})", self))
