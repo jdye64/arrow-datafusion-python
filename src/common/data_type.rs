@@ -326,6 +326,7 @@ impl DataTypeMap {
             }
             "float" => Ok(DataType::Float32),
             "double" => Ok(DataType::Float64),
+            "byte_array" => Ok(DataType::Utf8),
             _ => Err(PyValueError::new_err(format!(
                 "Unable to determine Arrow Data Type from Parquet String type: {:?}",
                 parquet_str_type
