@@ -16,6 +16,7 @@
 # under the License.
 
 import os
+import glob
 from typing import Any
 
 from datafusion.common import DataTypeMap, SqlTable
@@ -83,5 +84,8 @@ class LocationInputPlugin(BaseInputSource):
                 f"Input of format: `{format}` is currently not supported.\
                 Only Parquet and CSV."
             )
+        
+        # Input could possibly be multiple files. Create a list if so
+        input_files = glob.glob(input_file)
 
-        return SqlTable(table_name, columns, num_rows, input_file)
+        return SqlTable(table_name, columns, num_rows, input_files)

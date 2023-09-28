@@ -56,7 +56,7 @@ pub struct SqlTable {
     #[pyo3(get, set)]
     pub statistics: SqlStatistics,
     #[pyo3(get, set)]
-    pub filepath: Option<String>,
+    pub filepaths: Option<Vec<String>>,
 }
 
 #[pymethods]
@@ -66,7 +66,7 @@ impl SqlTable {
         table_name: String,
         columns: Vec<(String, DataTypeMap)>,
         row_count: f64,
-        filepath: Option<String>,
+        filepaths: Option<Vec<String>>,
     ) -> Self {
         Self {
             name: table_name,
@@ -76,7 +76,7 @@ impl SqlTable {
             indexes: Vec::new(),
             constraints: Vec::new(),
             statistics: SqlStatistics::new(row_count),
-            filepath,
+            filepaths,
         }
     }
 }
