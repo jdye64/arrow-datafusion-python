@@ -29,8 +29,8 @@ use prost::Message;
 
 #[pyclass(name = "plan", module = "datafusion.substrait", subclass)]
 #[derive(Debug, Clone)]
-pub(crate) struct PyPlan {
-    pub(crate) plan: Plan,
+pub struct PyPlan {
+    pub plan: Plan,
 }
 
 #[pymethods]
