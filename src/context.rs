@@ -215,8 +215,8 @@ impl PyRuntimeConfig {
 /// multi-threaded execution engine to perform the execution.
 #[pyclass(name = "SessionContext", module = "datafusion", subclass)]
 #[derive(Clone)]
-pub(crate) struct PySessionContext {
-    pub(crate) ctx: SessionContext,
+pub struct PySessionContext {
+    pub ctx: SessionContext,
 }
 
 #[pymethods]
