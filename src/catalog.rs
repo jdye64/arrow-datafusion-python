@@ -57,10 +57,6 @@ impl PyDatabase {
 }
 
 impl PyTable {
-    pub fn new(table: Arc<dyn TableProvider>) -> Self {
-        Self { table }
-    }
-
     pub fn table(&self) -> Arc<dyn TableProvider> {
         self.table.clone()
     }
