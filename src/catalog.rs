@@ -117,6 +117,12 @@ impl PyDatabase {
 
 #[pymethods]
 impl PyTable {
+
+    #[new]
+    pub fn new(table: Arc<dyn TableProvider>) -> Self {
+        Self { table }
+    }
+
     /// Get a reference to the schema for this table
     #[getter]
     fn schema(&self, py: Python) -> PyResult<PyObject> {
