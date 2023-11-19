@@ -57,6 +57,10 @@ impl PyDatabase {
 }
 
 impl PyTable {
+    pub fn new(table: Arc<dyn TableProvider>) -> Self {
+        Self { table }
+    }
+
     pub fn table(&self) -> Arc<dyn TableProvider> {
         self.table.clone()
     }
@@ -113,12 +117,7 @@ impl PyDatabase {
 
 #[pymethods]
 impl PyTable {
-
-    #[new]
-    pub fn new(table: Arc<dyn TableProvider>) -> Self {
-        Self { table }
-    }
-
+    
     /// Get a reference to the schema for this table
     #[getter]
     fn schema(&self, py: Python) -> PyResult<PyObject> {
