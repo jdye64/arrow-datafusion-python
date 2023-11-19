@@ -60,8 +60,8 @@ use tokio::task::JoinHandle;
 /// Configuration options for a SessionContext
 #[pyclass(name = "SessionConfig", module = "datafusion", subclass)]
 #[derive(Clone, Default)]
-pub(crate) struct PySessionConfig {
-    pub(crate) config: SessionConfig,
+pub struct PySessionConfig {
+    pub config: SessionConfig,
 }
 
 impl From<SessionConfig> for PySessionConfig {
@@ -153,8 +153,8 @@ impl PySessionConfig {
 /// Runtime options for a SessionContext
 #[pyclass(name = "RuntimeConfig", module = "datafusion", subclass)]
 #[derive(Clone)]
-pub(crate) struct PyRuntimeConfig {
-    pub(crate) config: RuntimeConfig,
+pub struct PyRuntimeConfig {
+    pub config: RuntimeConfig,
 }
 
 #[pymethods]
