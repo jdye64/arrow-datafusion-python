@@ -417,7 +417,7 @@ impl PySessionContext {
         })
     }
 
-    fn register_table(&mut self, name: &str, table: &PyTable) -> PyResult<()> {
+    pub fn register_table(&mut self, name: &str, table: &PyTable) -> PyResult<()> {
         self.ctx
             .register_table(name, table.table())
             .map_err(DataFusionError::from)?;
