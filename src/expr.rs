@@ -534,7 +534,7 @@ impl PyExpr {
             Ok(col_name) => {
                 if col_name.contains(")") {
                     println!("!!!!! FOUND THE PROBLEM !!!!!!");
-                    return Err(py_runtime_err("!!!!! FOUND THE PROBLEM !!!!!!"));
+                    // return Err(py_runtime_err("!!!!! FOUND THE PROBLEM !!!!!!"));
                 }
                 Ok(col_name)
             },
