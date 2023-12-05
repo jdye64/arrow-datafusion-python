@@ -69,7 +69,7 @@ pub struct PyScalarUDF {
 #[pymethods]
 impl PyScalarUDF {
     #[new(name, func, input_types, return_type, volatility)]
-    fn new(
+    pub fn new(
         name: &str,
         func: PyObject,
         input_types: PyArrowType<Vec<DataType>>,

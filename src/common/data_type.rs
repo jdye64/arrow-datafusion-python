@@ -29,6 +29,7 @@ pub enum RexType {
     Call,
     Reference,
     ScalarSubquery,
+    Wildcard,
     Other,
 }
 

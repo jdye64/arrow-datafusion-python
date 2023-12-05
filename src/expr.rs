@@ -34,7 +34,7 @@ use datafusion_expr::{
     Operator, TryCast,
 };
 
-use crate::common::data_type::{DataTypeMap, RexType};
+use crate::{common::data_type::{DataTypeMap, RexType}, udf::PyScalarUDF};
 use crate::errors::{py_runtime_err, py_type_err, DataFusionError};
 use crate::expr::aggregate_expr::PyAggregateFunction;
 use crate::expr::binary_expr::PyBinaryExpr;
@@ -141,6 +141,7 @@ impl PyExpr {
             Expr::IsNotFalse(expr) => Ok(PyIsNotFalse::new(*expr.clone()).into_py(py)),
             Expr::IsNotUnknown(expr) => Ok(PyIsNotUnknown::new(*expr.clone()).into_py(py)),
             Expr::Negative(expr) => Ok(PyNegative::new(*expr.clone()).into_py(py)),
+            Expr::ScalarUDF(scalar_udf) => Ok(PyScalarUDF::new(*scalar_udf.clone()).into_py(py)),
             Expr::AggregateFunction(expr) => {
                 Ok(PyAggregateFunction::from(expr.clone()).into_py(py))
             }
@@ -287,7 +288,6 @@ impl PyExpr {
             | Expr::WindowFunction { .. }
             | Expr::AggregateUDF { .. }
             | Expr::InList { .. }
-            | Expr::Wildcard
             | Expr::ScalarUDF { .. }
             | Expr::Exists { .. }
             | Expr::InSubquery { .. }
@@ -300,6 +300,7 @@ impl PyExpr {
             | Expr::Placeholder { .. }
             | Expr::OuterReferenceColumn(_, _)
             | Expr::IsNotUnknown(_) => RexType::Call,
+            Expr::Wildcard => RexType::Wildcard,
             Expr::ScalarSubquery(..) => RexType::ScalarSubquery,
         })
     }
