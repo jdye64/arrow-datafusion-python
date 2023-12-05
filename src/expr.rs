@@ -528,7 +528,11 @@ impl PyExpr {
     }
 
     pub fn column_name(&self, plan: PyLogicalPlan) -> PyResult<String> {
-        self._column_name(&plan.plan()).map_err(py_runtime_err)
+        let col_name = self._column_name(&plan.plan()).map_err(py_runtime_err);
+        if col_name.contains(")") {
+            println!("!!!!! FOUND THE PROBLEM !!!!!!")
+        }
+        col_name
     }
 }
 
