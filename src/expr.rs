@@ -141,7 +141,6 @@ impl PyExpr {
             Expr::IsNotFalse(expr) => Ok(PyIsNotFalse::new(*expr.clone()).into_py(py)),
             Expr::IsNotUnknown(expr) => Ok(PyIsNotUnknown::new(*expr.clone()).into_py(py)),
             Expr::Negative(expr) => Ok(PyNegative::new(*expr.clone()).into_py(py)),
-            Expr::ScalarUDF(scalar_udf) => Ok(PyScalarUDF::new(*scalar_udf.clone()).into_py(py)),
             Expr::AggregateFunction(expr) => {
                 Ok(PyAggregateFunction::from(expr.clone()).into_py(py))
             }
