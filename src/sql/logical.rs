@@ -39,7 +39,7 @@ use pyo3::prelude::*;
 
 use crate::expr::logical_node::LogicalNode;
 
-#[pyclass]
+#[pyclass(name = "LogicalPlan", module = "datafusion", subclass)]
 #[derive(Debug, Clone)]
 pub struct PyLogicalPlan {
     pub(crate) plan: Arc<LogicalPlan>,
