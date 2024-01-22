@@ -24,17 +24,14 @@ use datafusion::scalar::ScalarValue;
 use datafusion_common::DFField;
 use datafusion_expr::{
     col,
-    expr::{
-        AggregateFunction, AggregateUDF, InList, InSubquery, ScalarFunction, ScalarUDF, Sort,
-        WindowFunction,
-    },
+    expr::{AggregateFunction, InList, InSubquery, ScalarFunction, Sort, WindowFunction},
     lit,
     utils::exprlist_to_fields,
     Between, BinaryExpr, Case, Cast, Expr, GetFieldAccess, GetIndexedField, Like, LogicalPlan,
     Operator, TryCast,
 };
 
-use crate::{common::data_type::{DataTypeMap, RexType}, udf::PyScalarUDF};
+use crate::common::data_type::{DataTypeMap, RexType};
 use crate::errors::{py_runtime_err, py_type_err, DataFusionError};
 use crate::expr::aggregate_expr::PyAggregateFunction;
 use crate::expr::binary_expr::PyBinaryExpr;
@@ -266,9 +263,7 @@ impl PyExpr {
     pub fn rex_type(&self) -> PyResult<RexType> {
         Ok(match self.expr {
             Expr::Alias(..) => RexType::Alias,
-            Expr::Column(..) | Expr::QualifiedWildcard { .. } | Expr::GetIndexedField { .. } => {
-                RexType::Reference
-            }
+            Expr::Column(..) | Expr::GetIndexedField { .. } => RexType::Reference,
             Expr::ScalarVariable(..) | Expr::Literal(..) => RexType::Literal,
             Expr::BinaryExpr { .. }
             | Expr::Not(..)
@@ -285,9 +280,7 @@ impl PyExpr {
             | Expr::ScalarFunction { .. }
             | Expr::AggregateFunction { .. }
             | Expr::WindowFunction { .. }
-            | Expr::AggregateUDF { .. }
             | Expr::InList { .. }
-            | Expr::ScalarUDF { .. }
             | Expr::Exists { .. }
             | Expr::InSubquery { .. }
             | Expr::GroupingSet(..)
@@ -299,7 +292,7 @@ impl PyExpr {
             | Expr::Placeholder { .. }
             | Expr::OuterReferenceColumn(_, _)
             | Expr::IsNotUnknown(_) => RexType::Call,
-            Expr::Wildcard => RexType::Wildcard,
+            Expr::Wildcard { .. } => RexType::Wildcard,
             Expr::ScalarSubquery(..) => RexType::ScalarSubquery,
         })
     }
@@ -333,7 +326,7 @@ impl PyExpr {
                 ScalarValue::Binary(v) => v.clone().into_py(py),
                 ScalarValue::FixedSizeBinary(_, _) => todo!(),
                 ScalarValue::LargeBinary(v) => v.clone().into_py(py),
-                ScalarValue::List(_, _) => todo!(),
+                ScalarValue::List(_) => todo!(),
                 ScalarValue::Date32(v) => v.into_py(py),
                 ScalarValue::Date64(v) => v.into_py(py),
                 ScalarValue::Time32Second(v) => v.into_py(py),
@@ -353,7 +346,8 @@ impl PyExpr {
                 ScalarValue::DurationMillisecond(v) => v.into_py(py),
                 ScalarValue::Struct(_, _) => todo!(),
                 ScalarValue::Dictionary(_, _) => todo!(),
-                ScalarValue::Fixedsizelist(_, _, _) => todo!(),
+                ScalarValue::FixedSizeList(_) => todo!(),
+                ScalarValue::LargeList(_) => todo!(),
             }),
             _ => Err(py_type_err(format!(
                 "Non Expr::Literal encountered in types: {:?}",
@@ -393,9 +387,7 @@ impl PyExpr {
 
             // Expr variants containing a collection of Expr(s) for operands
             Expr::AggregateFunction(AggregateFunction { args, .. })
-            | Expr::AggregateUDF(AggregateUDF { args, .. })
             | Expr::ScalarFunction(ScalarFunction { args, .. })
-            | Expr::ScalarUDF(ScalarUDF { args, .. })
             | Expr::WindowFunction(WindowFunction { args, .. }) => {
                 Ok(args.iter().map(|arg| PyExpr::from(arg.clone())).collect())
             }
@@ -464,8 +456,7 @@ impl PyExpr {
             // Currently un-support/implemented Expr types for Rex Call operations
             Expr::GroupingSet(..)
             | Expr::OuterReferenceColumn(_, _)
-            | Expr::Wildcard
-            | Expr::QualifiedWildcard { .. }
+            | Expr::Wildcard { .. }
             | Expr::ScalarSubquery(..)
             | Expr::Placeholder { .. }
             | Expr::Exists { .. } => Err(py_runtime_err(format!(
@@ -483,8 +474,9 @@ impl PyExpr {
                 op,
                 right: _,
             }) => format!("{op}"),
-            Expr::ScalarFunction(ScalarFunction { fun, args: _ }) => format!("{fun}"),
-            Expr::ScalarUDF(ScalarUDF { fun, .. }) => fun.name.clone(),
+            Expr::ScalarFunction(ScalarFunction { func_def, args: _ }) => {
+                func_def.name().to_string()
+            }
             Expr::Cast { .. } => "cast".to_string(),
             Expr::Between { .. } => "between".to_string(),
             Expr::Case { .. } => "case".to_string(),
@@ -560,7 +552,7 @@ impl PyExpr {
                 // appear in projections) so we just delegate to the contained expression instead
                 Self::expr_to_field(expr, input_plan)
             }
-            Expr::Wildcard => {
+            Expr::Wildcard { .. } => {
                 // Since * could be any of the valid column names just return the first one
                 Ok(input_plan.schema().field(0).clone())
             }

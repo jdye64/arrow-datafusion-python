@@ -143,18 +143,19 @@ pub struct PyAggregateUDF {
 
 #[pymethods]
 impl PyAggregateUDF {
-    #[new(name, accumulator, input_type, return_type, state_type, volatility)]
+    #[new]
+    #[pyo3(signature=(name, accumulator, input_type, return_type, state_type, volatility))]
     fn new(
         name: &str,
         accumulator: PyObject,
-        input_type: PyArrowType<DataType>,
+        input_type: PyArrowType<Vec<DataType>>,
         return_type: PyArrowType<DataType>,
         state_type: PyArrowType<Vec<DataType>>,
         volatility: &str,
     ) -> PyResult<Self> {
         let function = create_udaf(
             name,
-            vec![input_type.0],
+            input_type.0,
             Arc::new(return_type.0),
             parse_volatility(volatility)?,
             to_rust_accumulator(accumulator),
@@ -171,6 +172,6 @@ impl PyAggregateUDF {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("AggregateUDF({})", self.function.name))
+        Ok(format!("AggregateUDF({})", self.function.name()))
     }
 }

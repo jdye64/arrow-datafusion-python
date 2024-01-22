@@ -68,8 +68,9 @@ pub struct PyScalarUDF {
 
 #[pymethods]
 impl PyScalarUDF {
-    #[new(name, func, input_types, return_type, volatility)]
-    pub fn new(
+    #[new]
+    #[pyo3(signature=(name, func, input_types, return_type, volatility))]
+    fn new(
         name: &str,
         func: PyObject,
         input_types: PyArrowType<Vec<DataType>>,
@@ -94,6 +95,6 @@ impl PyScalarUDF {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("ScalarUDF({})", self.function.name))
+        Ok(format!("ScalarUDF({})", self.function.name()))
     }
 }

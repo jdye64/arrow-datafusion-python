@@ -23,11 +23,11 @@ use crate::expr::conditional_expr::PyCaseBuilder;
 use crate::expr::window::PyWindowFrame;
 use crate::expr::PyExpr;
 use datafusion::execution::FunctionRegistry;
-use datafusion_common::Column;
+use datafusion_common::{Column, TableReference};
 use datafusion_expr::expr::Alias;
 use datafusion_expr::{
     aggregate_function,
-    expr::{AggregateFunction, ScalarFunction, Sort, WindowFunction},
+    expr::{AggregateFunction, AggregateFunctionDefinition, ScalarFunction, Sort, WindowFunction},
     lit,
     window_function::find_df_window_func,
     BuiltinScalarFunction, Expr,
@@ -88,8 +88,9 @@ fn order_by(expr: PyExpr, asc: Option<bool>, nulls_first: Option<bool>) -> PyRes
 /// Creates a new Alias Expr
 #[pyfunction]
 fn alias(expr: PyExpr, name: &str) -> PyResult<PyExpr> {
+    let relation: Option<TableReference> = None;
     Ok(PyExpr {
-        expr: datafusion_expr::Expr::Alias(Alias::new(expr.expr, name)),
+        expr: datafusion_expr::Expr::Alias(Alias::new(expr.expr, relation, name)),
     })
 }
 
@@ -109,7 +110,9 @@ fn col(name: &str) -> PyResult<PyExpr> {
 fn count_star() -> PyResult<PyExpr> {
     Ok(PyExpr {
         expr: Expr::AggregateFunction(AggregateFunction {
-            fun: aggregate_function::AggregateFunction::Count,
+            func_def: datafusion_expr::expr::AggregateFunctionDefinition::BuiltIn(
+                aggregate_function::AggregateFunction::Count,
+            ),
             args: vec![lit(1)],
             distinct: false,
             filter: None,
@@ -181,7 +184,9 @@ macro_rules! scalar_function {
         #[pyo3(signature = (*args))]
         fn $NAME(args: Vec<PyExpr>) -> PyExpr {
             let expr = datafusion_expr::Expr::ScalarFunction(ScalarFunction {
-                fun: BuiltinScalarFunction::$FUNC,
+                func_def: datafusion_expr::ScalarFunctionDefinition::BuiltIn(
+                    BuiltinScalarFunction::$FUNC,
+                ),
                 args: args.into_iter().map(|e| e.into()).collect(),
             });
             expr.into()
@@ -199,7 +204,9 @@ macro_rules! aggregate_function {
         #[pyo3(signature = (*args, distinct=false))]
         fn $NAME(args: Vec<PyExpr>, distinct: bool) -> PyExpr {
             let expr = datafusion_expr::Expr::AggregateFunction(AggregateFunction {
-                fun: datafusion_expr::aggregate_function::AggregateFunction::$FUNC,
+                func_def: AggregateFunctionDefinition::BuiltIn(
+                    datafusion_expr::aggregate_function::AggregateFunction::$FUNC,
+                ),
                 args: args.into_iter().map(|e| e.into()).collect(),
                 distinct,
                 filter: None,
@@ -349,6 +356,19 @@ scalar_function!(random, Random);
 //Binary String Functions
 scalar_function!(encode, Encode);
 scalar_function!(decode, Decode);
+
+// Array Functions
+scalar_function!(array_append, ArrayAppend);
+scalar_function!(array_concat, ArrayConcat);
+scalar_function!(array_cat, ArrayConcat);
+scalar_function!(array_dims, ArrayDims);
+scalar_function!(list_dims, ArrayDims);
+scalar_function!(array_element, ArrayElement);
+scalar_function!(array_extract, ArrayElement);
+scalar_function!(list_element, ArrayElement);
+scalar_function!(list_extract, ArrayElement);
+scalar_function!(array_length, ArrayLength);
+scalar_function!(list_length, ArrayLength);
 
 aggregate_function!(approx_distinct, ApproxDistinct);
 aggregate_function!(approx_median, ApproxMedian);
@@ -539,5 +559,19 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     //Binary String Functions
     m.add_wrapped(wrap_pyfunction!(encode))?;
     m.add_wrapped(wrap_pyfunction!(decode))?;
+
+    // Array Functions
+    m.add_wrapped(wrap_pyfunction!(array_append))?;
+    m.add_wrapped(wrap_pyfunction!(array_concat))?;
+    m.add_wrapped(wrap_pyfunction!(array_cat))?;
+    m.add_wrapped(wrap_pyfunction!(array_dims))?;
+    m.add_wrapped(wrap_pyfunction!(list_dims))?;
+    m.add_wrapped(wrap_pyfunction!(array_element))?;
+    m.add_wrapped(wrap_pyfunction!(array_extract))?;
+    m.add_wrapped(wrap_pyfunction!(list_element))?;
+    m.add_wrapped(wrap_pyfunction!(list_extract))?;
+    m.add_wrapped(wrap_pyfunction!(array_length))?;
+    m.add_wrapped(wrap_pyfunction!(list_length))?;
+
     Ok(())
 }

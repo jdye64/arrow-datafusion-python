@@ -30,12 +30,12 @@ use datafusion::{
 };
 
 #[pyclass(name = "Catalog", module = "datafusion", subclass)]
-pub(crate) struct PyCatalog {
+pub struct PyCatalog {
     pub catalog: Arc<dyn CatalogProvider>,
 }
 
 #[pyclass(name = "Database", module = "datafusion", subclass)]
-pub(crate) struct PyDatabase {
+pub struct PyDatabase {
     pub database: Arc<dyn SchemaProvider>,
 }
 

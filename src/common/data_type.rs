@@ -289,12 +289,16 @@ impl DataTypeMap {
             ScalarValue::IntervalMonthDayNano(..) => {
                 Ok(DataType::Interval(IntervalUnit::MonthDayNano))
             }
-            ScalarValue::List(_val, field_ref) => Ok(DataType::List(field_ref.to_owned())),
+            ScalarValue::List(arr) => Ok(arr.data_type().to_owned()),
             ScalarValue::Struct(_, fields) => Ok(DataType::Struct(fields.to_owned())),
             ScalarValue::FixedSizeBinary(size, _) => Ok(DataType::FixedSizeBinary(*size)),
-            ScalarValue::Fixedsizelist(_, field_ref, size) => {
-                Ok(DataType::FixedSizeList(field_ref.to_owned(), *size))
+            ScalarValue::FixedSizeList(_array_ref) => {
+                // The FieldRef was removed from ScalarValue::FixedSizeList in
+                // https://github.com/apache/arrow-datafusion/pull/8221, so we can no
+                // longer convert back to a DataType here
+                todo!()
             }
+            ScalarValue::LargeList(_) => todo!(),
             ScalarValue::DurationSecond(_) => Ok(DataType::Duration(TimeUnit::Second)),
             ScalarValue::DurationMillisecond(_) => Ok(DataType::Duration(TimeUnit::Millisecond)),
             ScalarValue::DurationMicrosecond(_) => Ok(DataType::Duration(TimeUnit::Microsecond)),
